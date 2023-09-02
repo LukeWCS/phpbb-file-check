@@ -1,3 +1,17 @@
+### 1.1.1
+(25.8.2023)
+
+* Fix: Wenn die Ignorieren-Liste `filecheck_ignore.txt` vorhanden war und diese mehrere ungültige RegEx Einträge enthielt, wurde nur der letzte gemeldet.
+* Fix: Bei Ausführung im Browser wurden die abschliessenden HTML Tags nicht generiert, wenn mit einer Fehlermeldung abgebrochen wurde.
+* Strengere Regeln bei den Prüfsummen-Dateien:
+  * Es werden nur noch Prüfsummen akzeptiert, die im Binär-Modus erstellt wurden.
+  * Dateinamen werden auf unerlaubte Zeichen geprüft.
+* Kann die phpBB Datei `includes/constants.php` nicht gefunden werden, wird das jetzt explizit als Hinweis gemeldet.
+* Im RegEx unnötige non-greedy Operatoren entfernt, da die Reichweite bereits per Zeichen-Klasse vorgegeben ist und ohnehin keine Abweichung erlaubt.
+* Kleine Änderungen.
+* Code Optimierung.
+* Haupt-Code kommentiert.
+
 ### 1.1.0 
 (20.7.2023)
 
