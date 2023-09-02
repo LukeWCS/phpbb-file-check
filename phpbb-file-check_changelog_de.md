@@ -1,3 +1,27 @@
+### 1.1.0 
+(20.7.2023)
+
+* Fix: Bei Verwendung in der Shell wurde bei einer Fehlermeldung bezüglich fehlender Prüfsummen-Datei der HTML Footer generiert.
+* Um die Problematik der Abweichungen bei phpBB.de und phpBB.com Paketen in den Griff zu bekommen, mussten einige Änderungen vorgenommen werden. Die Basis für FC ist nicht mehr das deutsche Komplettpaket, sondern das phpBB.com Paket. Um alle zusätzlichen und abweichenden Dateien des deutschen Komplettpakets berücksichtigen zu können, wird nun eine zweite Prüfsummen-Datei unterstützt, in der alle Abweichungen gegenüber dem phpBB.com Paket enthalten sind. FC kombiniert dann während der Ausführung beide Prüfsummen-Dateien. Somit können nun auch die abweichenden Dateien aussagekräftig geprüft werden, die bisher je nach Installationspaket möglicherweise falsch als `* CHANGED` gemeldet wurden.
+* Die Datei `config.php` wird nicht mehr ignoriert, sondern auf Existenz geprüft. Ausserdem wird geprüft, ob diese Datei 0 Bytes hat (In diesem Fall wird eine Warnung erzeugt). [Vorschlag von Scanialady]
+* In der Versionsübersicht ist die MD5 Version jetzt nach phpBB.de und phpBB.com unterteilt.
+* Neue Meldungs-Typen:
+  * `  NOTICE`
+  * `! WARNING`
+* Bei den Meldungen wird in den geschweiften Klammern jetzt auch die Nummer der Prüfsummen-Datei vorangestellt.
+* Änderungen in der Zusammenfassung:
+  * Entfernt: Anzahl der gültigen Hashes, da eine fehlerhafte Prüfsummen-Datei ohnehin nicht mehr akzeptiert wird.
+  * Neu: Anzahl der Hinweise (NOTICE), sofern welche vorhanden sind.
+  * Neu: Anzahl der Warnungen (WARNING), sofern welche vorhanden sind.
+* Die Prüfsummen-Dateien werden mit ungültigem oder fehlendem Versions-Merkmal nicht mehr akzeptiert. In diesem Fall wird mit Fehlermeldung abgebrochen.
+* Die externe Ignorieren-Liste wird jetzt, sofern vorhanden, auf gültiges RegEx geprüft. Ist ungültiges RegEx vorhanden, wird mit Fehlermeldung abgebrochen.
+* Fehlerbehandlung auch an anderen Stellen erweitert und Fehlertoleranz bezüglich FC Dateien deutlich reduziert. Das betrifft besonders die Prüfsummen-Dateien.
+* Wenn FC bei Erkennung eines User-Agent-Strings den Bericht im HTML Format ausliefert, ist jetzt ein Meta Tag enthalten, der Suchmaschinen Indizierung verhindern soll. Das kann hilfreich sein, wenn vergessen wurde FC nach Benutzung zu löschen. Das funktioniert natürlich nur bei Crawlern, die sich auch an die Regeln halten. Trotzdem sollte FC auch weiterhin vom FTP Server gelöscht werden, wenn es nicht mehr benötigt wird.
+* Code Optimierung
+* Prüfsummen-Paket komplett neu erstellt. Pro phpBB Version gibt es jetzt 2 Prüfsummen-Dateien; eine vollständige für das phpBB.com Paket und eine für das phpBB.de Komplettpaket, welche nur die Abweichungen zum phpBB.com Paket enthält. Die alten Prüfsummen-Dateien werden nicht mehr akzeptiert.
+* Erklärung der Meldungen angepasst.
+* Anleitung angepasst. Ausserdem gelbe Info-Box entfernt, da das Installationspaket (original phpBB.com Paket oder phpBB.de Komplettpaket) nicht länger relevant ist.
+
 ### 1.0.0
 (12.7.2023)
 
