@@ -1,3 +1,15 @@
+### 0.5.0
+(10.7.2023)
+
+* Da ich festgestellt habe, dass in den phpBB Paketen einige überflüssige Dateien vorhanden sind, mussten weitere Einträge zur Ignorieren-Liste hinzugefügt werden. Bei den besagten Dateien handelt es sich um git Dateien, die in einem Distributionspaket für Endbenutzer eigentlich nichts zu suchen haben. Damit diese Dateien nicht umständlich einzeln hinzugefügt werden müssen, was auch nicht zukunftssicher wäre, wurde die Ignorieren-Funktion von einem simplen Textvergleich auf RegEx umgestellt. Dadurch ist die Ignorieren-Funktion nun erheblich flexibler verwendbar.
+* Um genau verfolgen zu können, welche Dateien von FC ignoriert und welche per Ausnahme ausgeschlossen wurden, kann man jetzt bei Bedarf den neuen Debug-Modus aktivieren. Dazu muss im FC Skript einfach die Zeile `$debug_mode = true` aktiviert werden. Dadurch werden folgende zusätzliche Anzeigen generiert:
+  * Im Titel der Zusatz `(DEBUG MODE)`.
+  * In der Meldungsliste bei Ausschlüssen explizit ob die Regel Ignoriert (`- IGNORED`) oder Ausnahme (`- EXCEPTION`) angewendet wurde.
+  * In der Zusammenfassung 2 neue Zähler für Ignorierte und Ausnahmen.
+* RegEx für die Plausibilitätsprüfung der MD5 Einträge sowie der phpBB Version in der MD5 Datei strikter gestaltet.
+* Mehrere Texte und auch Code neutral gestaltet in Bezug auf den verwendeten Hash Algorithmus. Somit ist ein zukünftiger Wechsel auf einen anderen Hash Algorithmus einfacher.
+* Kleine Code Verbesserungen.
+
 ### 0.4.0
 (8.7.2023)
 

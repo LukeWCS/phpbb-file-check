@@ -5,29 +5,33 @@
 *
 * PHP: >=7.1.0,<8.3.0
 *
-* @copyright (c) 2023 LukeWCS <phpBB.de>
-* @license GNU General Public License, version 2 (GPL-2.0-only)
+* @copyright (c) 2023, LukeWCS (phpBB.de)
 *
 */
 
-$ver					= '0.4.0';
+// $debug_mode				= true;
 
 $root_path				= __DIR__ . '/';
 $checksum_file_name		= 'filecheck';
-$checksum_file			= $checksum_file_name . '.md5';
+$checksum_file_suffix	= '.md5';
+$checksum_file			= $checksum_file_name . $checksum_file_suffix;
 $checksum_file_select	= 'manually';
 $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $contants_file			= 'includes/constants.php';
 
+$ver					= '0.5.0';
 $is_browser				= $_SERVER['HTTP_USER_AGENT'] ?? '' != '';
 $lf						= "\n";
 $unknown				= '{unknown}';
+$debug_mode				= $debug_mode ?? false;
+$msg_type_len			= ($debug_mode ? 9 : 7);
 $output					= '';
 $start_time				= microtime(true);
 
 $ignored = [
-	'config.php',
+	'^config.php',
+	'^\.git|\/\.git',
 ];
 $exceptions = [
 	'ext/phpbb/viglink/',
@@ -40,7 +44,7 @@ if (file_exists($root_path . $contants_file))
 	$PHPBB_VERSION = $matches[1] ?? null;
 	if ($PHPBB_VERSION !== null && !file_exists($root_path . $checksum_file))
 	{
-		$checksum_file			= $checksum_file_name . '_' . $PHPBB_VERSION . '.md5';
+		$checksum_file			= $checksum_file_name . '_' . $PHPBB_VERSION . $checksum_file_suffix;
 		$checksum_file_select	= 'auto';
 	}
 }
@@ -50,7 +54,7 @@ if (file_exists($root_path . $checksum_file))
 	$checksums = file($root_path . $checksum_file, FILE_IGNORE_NEW_LINES);
 	if ($checksums !== false)
 	{
-		preg_match('/([0-9]+?\.[0-9]+?\.[0-9]+)/', end($checksums), $matches);
+		preg_match('/^([0-9]+?\.[0-9]+?\.[0-9]+)/', end($checksums), $matches);
 		if (is_array($matches) && count($matches) == 2)
 		{
 			$checksums_ver	= array_pop($checksums);
@@ -86,7 +90,7 @@ if ($is_browser)
 	$output .= '<pre>' . $lf;
 }
 
-$output .= "phpBB File Check v{$ver}" . $lf;
+$output .= "phpBB File Check v{$ver}" . ($debug_mode ? ' (DEBUG MODE)' : '') . $lf;
 $output .= "==================" . str_repeat('=', strlen($ver)) . $lf;
 
 $output .= $lf;
@@ -95,7 +99,7 @@ $output .= 'MD5 Version  : ' . ($checksums_ver ?? $unknown) . ' (' . $checksum_f
 $output .= 'PHP Version  : ' . PHP_VERSION . ' (' . PHP_OS . ')' . $lf;
 
 $output .= $lf;
-$output .= 'Please wait, ' . ($count_checksums ?? $unknown) . ' MD5 entries are being processed...' . $lf;
+$output .= 'Please wait, ' . ($count_checksums ?? $unknown) . ' checksums are being processed...' . $lf;
 
 flush_buffer($output);
 
@@ -104,40 +108,56 @@ $count_missing		= 0;
 $count_changed		= 0;
 $count_error		= 0;
 $count_ignored		= 0;
-$count_valid_md5	= 0;
+$count_exceptions	= 0;
+$count_excluded		= 0;
+$count_valid_hash	= 0;
 foreach ($checksums as $row)
 {
 	$line_num++;
-	preg_match('/([0-9a-f]{32}) [* ](.*)/', $row, $matches);
+	preg_match('/^([0-9a-f]{32}) [* ](.+)/', $row, $matches);
 	if (is_array($matches) && count($matches) == 3)
 	{
-		$count_valid_md5++;
-		$md5_saved = $matches[1];
+		$count_valid_hash++;
+		$hash_saved = $matches[1];
 		$file = $matches[2];
-		if (is_ignored($file, $ignored) || is_missing_but_exception($file, $exceptions))
+		$is_ignored = is_ignored($file, $ignored);
+		if ($is_ignored || is_missing_but_exception($file, $exceptions))
 		{
-			$count_ignored++;
+			if ($debug_mode)
+			{
+				if ($is_ignored)
+				{
+					$output .= sprintf('{%1$ ' . $count_len . '.u} - %2$ -' . $msg_type_len . 's: [%3$s]', $line_num, 'IGNORED', $file) . $lf;
+					$count_ignored++;
+				}
+				else
+				{
+					$output .= sprintf('{%1$ ' . $count_len . '.u} - %2$ -' . $msg_type_len . 's: [%3$s]', $line_num, 'EXCEPTION', $file) . $lf;
+					$count_exceptions++;
+				}
+			}
+			$count_excluded++;
 			continue;
 		}
 
 		if (file_exists($root_path . $file))
 		{
-			$md5_calc = md5_file($root_path . $file);
-			if ($md5_saved != $md5_calc)
+			$hash_calc = md5_file($root_path . $file);
+			if ($hash_saved != $hash_calc)
 			{
-				$output .= sprintf('{%1$ ' . $count_len . '.u} * CHANGED: [%2$s] (MD5: %3$s)', $line_num, $file, $md5_calc) . $lf;
+				$output .= sprintf('{%1$ ' . $count_len . '.u} * %2$ -' . $msg_type_len . 's: [%3$s] (hash: %4$s)', $line_num, 'CHANGED', $file, $hash_calc) . $lf;
 				$count_changed++;
 			}
 		}
 		else
 		{
-			$output .= sprintf('{%1$ ' . $count_len . '.u} ! MISSING: [%2$s]', $line_num, $file) . $lf;
+			$output .= sprintf('{%1$ ' . $count_len . '.u} ! %2$ -' . $msg_type_len . 's: [%3$s]', $line_num, 'MISSING', $file) . $lf;
 			$count_missing++;
 		}
 	}
 	else
 	{
-		$output .= sprintf('{%1$ ' . $count_len . '.u} ~ ERROR  : invalid MD5 row "%2$s"', $line_num, $row) . $lf;
+		$output .= sprintf('{%1$ ' . $count_len . '.u} ~ %2$ -' . $msg_type_len . 's: invalid hash row "%3$s"', $line_num, 'ERROR', $row) . $lf;
 		$count_error++;
 	}
 }
@@ -150,8 +170,13 @@ if ($list_separator != '')
 }
 
 $output .= $lf;
-$output .= sprintf('Valid MD5    : % ' . $count_len . '.u', $count_valid_md5) . $lf;
-$output .= sprintf('Checked files: % ' . $count_len . '.u', $count_valid_md5 - $count_ignored) . $lf;
+$output .= sprintf('Valid hashes : % ' . $count_len . '.u', $count_valid_hash) . $lf;
+if ($debug_mode)
+{
+	$output .= sprintf('Ignored      : % ' . $count_len . '.u', $count_ignored) . $lf;
+	$output .= sprintf('Exceptions   : % ' . $count_len . '.u', $count_exceptions) . $lf;
+}
+$output .= sprintf('Checked files: % ' . $count_len . '.u', $count_valid_hash - $count_excluded) . $lf;
 $output .= sprintf('Missing files: % ' . $count_len . '.u', $count_missing) . $lf;
 $output .= sprintf('Changed files: % ' . $count_len . '.u', $count_changed) . $lf;
 if ($count_error)
@@ -175,7 +200,8 @@ function is_ignored(string $file, array &$ignore_list): bool
 {
 	foreach ($ignore_list as $ignored)
 	{
-		if (strpos($file, $ignored) === 0)
+		$regex = @preg_match('/' . $ignored . '/', $file);
+		if ($regex !== false && $regex)
 		{
 			return true;
 		}
