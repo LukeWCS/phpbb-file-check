@@ -5,27 +5,28 @@
 *
 * PHP: >=7.1.0,<8.3.0
 *
-* @copyright (c) 2023, LukeWCS (phpBB.de)
+* @copyright (c) 2023 LukeWCS <phpBB.de>
+* @license GNU General Public License, version 2 (GPL-2.0-only)
 *
 */
 
-// $debug_mode				= true;
+$debug_mode				= false;
 
 $root_path				= __DIR__ . '/';
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
 $checksum_file			= $checksum_file_name . $checksum_file_suffix;
-$checksum_file_select	= 'manually';
+$checksum_select_mode	= 'manually';
 $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $contants_file			= 'includes/constants.php';
 
-$ver					= '0.5.0';
+$ver					= '0.5.1';
+$title					= "phpBB File Check v{$ver}";
 $is_browser				= $_SERVER['HTTP_USER_AGENT'] ?? '' != '';
 $lf						= "\n";
 $unknown				= '{unknown}';
-$debug_mode				= $debug_mode ?? false;
-$msg_type_len			= ($debug_mode ? 9 : 7);
+$msg_type_len			= $debug_mode ? 9 : 7;
 $output					= '';
 $start_time				= microtime(true);
 
@@ -34,9 +35,18 @@ $ignored = [
 	'^\.git|\/\.git',
 ];
 $exceptions = [
+	'docs/',
 	'ext/phpbb/viglink/',
 	'install/',
 ];
+
+if ($is_browser)
+{
+	$output .= html_start();
+}
+
+$output .= $title . ($debug_mode ? ' (DEBUG MODE)' : '') . $lf;
+$output .= str_repeat('=', strlen($title)) . $lf . $lf;;
 
 if (file_exists($root_path . $contants_file))
 {
@@ -45,7 +55,7 @@ if (file_exists($root_path . $contants_file))
 	if ($PHPBB_VERSION !== null && !file_exists($root_path . $checksum_file))
 	{
 		$checksum_file			= $checksum_file_name . '_' . $PHPBB_VERSION . $checksum_file_suffix;
-		$checksum_file_select	= 'auto';
+		$checksum_select_mode	= 'auto';
 	}
 }
 
@@ -65,7 +75,9 @@ if (file_exists($root_path . $checksum_file))
 }
 else
 {
-	echo "ERROR: checksum file [{$checksum_file}] not found" . $lf;
+	$output .= "ERROR: checksum file [{$checksum_file}] not found" . $lf;
+	$output .= html_end();
+	flush_buffer($output);
 	exit;
 }
 
@@ -79,23 +91,8 @@ if (file_exists($root_path . $exceptions_file))
 	$exceptions = array_merge($exceptions, file($root_path . $exceptions_file, FILE_IGNORE_NEW_LINES));
 }
 
-if ($is_browser)
-{
-	$output .= '<!DOCTYPE HTML>' . $lf;
-	$output .= '<html>' . $lf;
-	$output .= '<head>' . $lf;
-	$output .= '	<title>phpBB File Check</title>' . $lf;
-	$output .= '</head>' . $lf;
-	$output .= '<body style="font-size: 1.1em;">' . $lf;
-	$output .= '<pre>' . $lf;
-}
-
-$output .= "phpBB File Check v{$ver}" . ($debug_mode ? ' (DEBUG MODE)' : '') . $lf;
-$output .= "==================" . str_repeat('=', strlen($ver)) . $lf;
-
-$output .= $lf;
 $output .= 'phpBB Version: ' . ($PHPBB_VERSION ?? $unknown) . $lf;
-$output .= 'MD5 Version  : ' . ($checksums_ver ?? $unknown) . ' (' . $checksum_file_select . ')' . $lf;
+$output .= 'MD5 Version  : ' . ($checksums_ver ?? $unknown) . ' (' . $checksum_select_mode . ')' . $lf;
 $output .= 'PHP Version  : ' . PHP_VERSION . ' (' . PHP_OS . ')' . $lf;
 
 $output .= $lf;
@@ -189,9 +186,7 @@ $output .= sprintf('Finished! Run time: %.3f seconds', microtime(true) - $start_
 
 if ($is_browser)
 {
-	$output .= '</pre>' . $lf;
-	$output .= '</body>' . $lf;
-	$output .= '</html>' . $lf;
+	$output .= html_end();
 }
 
 flush_buffer($output);
@@ -230,4 +225,32 @@ function flush_buffer(string &$text): void
 	echo $text;
 	$text = '';
 	flush();
+}
+
+function html_start(): string
+{
+	global $lf;
+
+	$output = '';
+	$output .= '<!DOCTYPE HTML>' . $lf;
+	$output .= '<html>' . $lf;
+	$output .= '<head>' . $lf;
+	$output .= '	<title>phpBB File Check</title>' . $lf;
+	$output .= '</head>' . $lf;
+	$output .= '<body style="font-size: 1.1em;">' . $lf;
+	$output .= '<pre>' . $lf;
+
+	return $output;
+}
+
+function html_end(): string
+{
+	global $lf;
+
+	$output = '';
+	$output .= '</pre>' . $lf;
+	$output .= '</body>' . $lf;
+	$output .= '</html>' . $lf;
+
+	return $output;
 }

@@ -1,3 +1,12 @@
+### 0.5.1
+(11.7.2023)
+
+* Die Zeile mit der Variable für den Debug-Modus ist kein Kommentar mehr, sondern eine aktive Codezeile. Die Variable ist per Standard mit `false` belegt und kann bei Bedarf auf `true` gesetzt werden.
+* Nachfolgende Ordner wurden zu den Ausnahmen hinzugefügt:
+  * `docs/`
+* Auch Fehlermeldungen die einen Abbruch von FC zur Folge haben, zum Beispiel bei einer fehlenden Prüfsummen-Datei, sind jetzt in ein HTML Gerüst eingebettet, sofern FC im Browser ausgeführt wird.
+* Ausserdem wird jetzt zumindest der FC Titel immer ausgegeben, also auch bei Abbruch.
+
 ### 0.5.0
 (10.7.2023)
 
