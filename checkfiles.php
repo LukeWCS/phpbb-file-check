@@ -10,22 +10,17 @@
 *
 */
 
-$ver = '0.1.1';
+$ver = '0.1.2';
 $pin = '';
 
 $ignored_files = [
 	'config.php',
 ];
-
-// $exception_folders = [
-	// 'install/'				=> preg_replace('/[\\\\\/]/', DIRECTORY_SEPARATOR, 'install/'),
-	// 'language/de/'			=> preg_replace('/[\\\\\/]/', DIRECTORY_SEPARATOR, 'language/de/'),
-	// 'language/de_x_sie/'	=> preg_replace('/[\\\\\/]/', DIRECTORY_SEPARATOR, 'language/de_x_sie/'),
-// ];
 $exception_folders = [
 	'install/',
 	'language/de/',
 	'language/de_x_sie/',
+	'ext/phpbb/viglink/',
 ];
 
 $is_browser			= $_SERVER['HTTP_USER_AGENT'] ?? '' != '';
@@ -70,11 +65,9 @@ if ($is_browser)
 
 echo "phpBB CheckFiles v{$ver}{$lf}{$lf}";
 
-echo "phpBB Version : " . $PHPBB_VERSION . "{$lf}";
-echo "MD5 Version   : " . $checksums_ver . "{$lf}";
-echo "PHP Version   : " . PHP_VERSION . " (" . PHP_OS . "){$lf}";
-// echo "Client type  : " . ($is_browser ? 'Browser' : 'CLI') . "{$lf}";
-// echo "Files to check: " . $checksums_count . "{$lf}{$lf}";
+echo "phpBB Version: " . $PHPBB_VERSION . "{$lf}";
+echo "MD5 Version  : " . $checksums_ver . "{$lf}";
+echo "PHP Version  : " . PHP_VERSION . " (" . PHP_OS . "){$lf}";
 
 echo "{$lf}Please wait, we are checking {$checksums_count} files...{$lf}{$lf}";
 
@@ -119,11 +112,15 @@ foreach ($checksums as $line) {
 		$count_error++;
 	}
 }
-
 echo "{$lf}";
-echo "MISSING total: {$count_missing} {$lf}";
-echo "CHANGED total: {$count_changed} {$lf}";
-echo "ERROR total  : {$count_error} {$lf}";
+// echo "MISSING total: {$count_missing} {$lf}";
+// echo "CHANGED total: {$count_changed} {$lf}";
+// echo "ERRORS total : {$count_error} {$lf}";
+
+
+echo sprintf('MISSING total: % 4.u', $count_missing) . "{$lf}";
+echo sprintf('CHANGED total: % 4.u', $count_changed) . "{$lf}";
+echo sprintf('ERRORS total : % 4.u', $count_error) . "{$lf}";
 
 $run_time = round(microtime(true) - $start_time, 3);
 
@@ -142,7 +139,6 @@ function ignored_folder($file, $exception_folders)
 	{
 		if (strpos($file, $folder) === 0 && !file_exists($folder))
 		{
-			// var_dump($file, $folder);
 			return true;
 		}
 	}
