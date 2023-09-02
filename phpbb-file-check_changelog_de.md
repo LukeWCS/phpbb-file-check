@@ -1,3 +1,14 @@
+### 0.4.0
+(8.7.2023)
+
+* Bei Dateizugriffen werden statt relative Pfade jetzt absolute Pfade verwendet. In Meldungen werden nach wie vor relative Pfade angezeigt.
+* Die Einleitung "Please wait, we are checking x files..." war nicht korrekt, da es von den gültigen MD5 Einträgen sowie von den Listen der Ignorierten und Ausnahmen abhängt, wieviele Dateien tatsächlich geprüft werden. Darum Einleitung geändert in "Please wait, x MD5 entries are being processed...".
+* Neue Information in der Zusammenfassung: Wieviele gültige MD5 Einträge effektiv vorhanden sind. Nur MD5 Einträge, die die Plausibilitätsprüfung bestehen, werden als gültige Einträge gezählt.
+* Neue Information in der Zusammenfassung: Wieviele Dateien effektiv überprüft wurden. Hier sind die Ignorierten und Ausnahmen also abgezogen.
+* Damit Admins nicht durch die Anzeige "ERRORS total" in der Zusammenfassung irritiert werden, wird diese Zeile jetzt nur noch ausgegeben, wenn auch tatsächlich ein FC Fehler vorliegt.
+* Die letzte Zeile in der Prüfsummen-Datei, in der die phpBB Version vorhanden sein muss, wird jetzt auf Plausibilität geprüft. Handelt es sich nicht um eine gültige Version mit dem Muster "x.y.z", wird bei der MD5 Version "{unknown}" angezeigt. Des Weiteren wird diese Zeile bei einem Versionsfehler auch nicht aus der MD5 Liste entfernt, wodurch die fehlerhafte Zeile automatisch durch die MD5 Plausibilitätsprüfung gemeldet wird.
+* Kleine Code Verbesserungen.
+
 ### 0.3.0
 (6.7.2023)
 
