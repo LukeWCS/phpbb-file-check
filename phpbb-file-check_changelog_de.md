@@ -1,3 +1,14 @@
+### 0.3.0
+(6.7.2023)
+
+* Ab dieser Version kann FC selbständig die richtige MD5 laden, sofern vorhanden. Dazu muss die passende `filecheck_x.y.z.md5` vorhanden sein. Dieser Modus wird dann durch den Zusatz "(auto)" signalisiert. 
+* Der automatische Modus kann jederzeit mittels `filecheck.md5` übersteuert werden. In diesem Fall wird der manuelle Modus aktiviert und alle anderen `filecheck_x.y.z.md5` Dateien werden ignoriert. Dieser Modus wird dann durch den Zusatz "(manually)" signalisiert. Das kann in seltenen Fällen notwendig sein, wenn FC die phpBB Version nicht ermitteln kann.
+* FC und MD5 Dateien sind jetzt in getrennten Archiven organisiert, so wie es später dann auch bei Veröffentlichung auf phpBB.de der Fall sein wird.
+* Bei Verwendung im Browser wurde bisher noch der alte Seitentitel "phpBB CheckFiles" verwendet. Jetzt wird der korrekte Titel angezeigt.
+* Code Optimierung.
+* Kleinkram.
+* Liste der Eigenschaften und Anleitung aktualisiert.
+
 ### 0.2.1
 (3.7.2023)
 
