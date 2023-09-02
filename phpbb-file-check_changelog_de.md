@@ -1,3 +1,9 @@
+### 1.0.0
+(12.7.2023)
+
+* Erste öffentliche Version.
+* Ausser Versionsänderung keinen Unterschied zu 0.5.1.
+
 ### 0.5.1
 (11.7.2023)
 

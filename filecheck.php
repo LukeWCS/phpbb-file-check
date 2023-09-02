@@ -5,8 +5,7 @@
 *
 * PHP: >=7.1.0,<8.3.0
 *
-* @copyright (c) 2023 LukeWCS <phpBB.de>
-* @license GNU General Public License, version 2 (GPL-2.0-only)
+* @copyright (c) 2023, LukeWCS (phpBB.de)
 *
 */
 
@@ -21,7 +20,7 @@ $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $contants_file			= 'includes/constants.php';
 
-$ver					= '0.5.1';
+$ver					= '1.0.0';
 $title					= "phpBB File Check v{$ver}";
 $is_browser				= $_SERVER['HTTP_USER_AGENT'] ?? '' != '';
 $lf						= "\n";
