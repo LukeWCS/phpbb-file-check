@@ -1,3 +1,8 @@
+### 0.2.1
+(3.7.2023)
+
+* Fix: Bei PHP <8.0 wurde "Uncaught Error: Call to undefined function str_starts_with()" erzeugt. [Meldung von Scanialady]
+
 ### 0.2.0
 (3.7.2023)
 

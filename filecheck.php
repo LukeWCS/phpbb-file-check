@@ -10,7 +10,7 @@
 *
 */
 
-$ver = '0.2.0';
+$ver = '0.2.1';
 
 $ignored = [
 	'config.php',
@@ -153,7 +153,7 @@ function is_ignored(string $file, array &$ignore_list): bool
 {
 	foreach ($ignore_list as $ignored)
 	{
-		if (str_starts_with($file, $ignored))
+		if (strpos($file, $ignored) === 0)
 		{
 			return true;
 		}
@@ -165,7 +165,7 @@ function is_missing_but_exception(string $file, array &$exception_list): bool
 {
 	foreach ($exception_list as $exception)
 	{
-		if (str_starts_with($file, $exception) && !file_exists($exception))
+		if (strpos($file, $exception) === 0 && !file_exists($exception))
 		{
 			return true;
 		}
