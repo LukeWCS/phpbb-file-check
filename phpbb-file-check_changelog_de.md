@@ -1,3 +1,9 @@
+### 1.1.3
+(2023-10-07)
+
+* Beim Start wird jetzt die PHP Version geprüft und bei falschen Voraussetzungen das Skript mit Fehlermeldung abgebrochen.
+* Code Optimierung.
+
 ### 1.1.2
 (2023-09-09)
 

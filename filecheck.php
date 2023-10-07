@@ -3,8 +3,6 @@
 *
 * phpBB File Check - Checks all relevant files of a phpBB installation for existence and integrity
 *
-* PHP: >=7.1.0,<8.3.0
-*
 * @copyright (c) 2023 LukeWCS <phpBB.de>
 * @license GNU General Public License, version 2 (GPL-2.0-only)
 *
@@ -13,15 +11,24 @@
 # phpcs:disable PSR1.Files.SideEffects
 
 /*
+* Check requirements
+*/
+if (!(version_compare(PHP_VERSION, '7.1.0', '>=') && version_compare(PHP_VERSION, '8.3.0-dev', '<')))
+{
+	echo 'phpBB File Check: Invalid PHP Version ' . PHP_VERSION;
+	exit;
+}
+
+/*
 * Initialization
 */
 define('EOL'			, "\n");
 define('VALID_CHARS'	, 'a-zA-Z0-9\/\-_.');
 define('IS_BROWSER'		, $_SERVER['HTTP_USER_AGENT'] ?? '' != '');
+define('ROOT_PATH'		, __DIR__ . '/');
 
 $debug_mode				= false;
 
-$root_path				= __DIR__ . '/';
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
 $checksum_file			= $checksum_file_name . $checksum_file_suffix;
@@ -31,7 +38,7 @@ $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $constants_file			= 'includes/constants.php';
 
-$ver					= '1.1.2';
+$ver					= '1.1.3';
 $title					= "phpBB File Check v{$ver}";
 $unknown				= '{unknown}';
 $output					= html_start();
@@ -41,7 +48,7 @@ $ignore_list = [
 	'/^\.git|\/\.git/',
 ];
 
-$exceptions_list = [
+$exception_list = [
 	'docs/',
 	'ext/phpbb/viglink/',
 	'install/',
@@ -56,14 +63,14 @@ $output .= str_repeat('=', strlen($title)) . EOL . EOL;
 /*
 * Get the phpBB version from constants.php
 */
-if (file_exists($root_path . $constants_file))
+if (file_exists(ROOT_PATH . $constants_file))
 {
-	$constants_content = @file_get_contents($root_path . $constants_file);
+	$constants_content = @file_get_contents(ROOT_PATH . $constants_file);
 	if ($constants_content !== false)
 	{
 		preg_match('/\'PHPBB_VERSION\'\s*,\s*\'([0-9]+\.[0-9]+\.[0-9]+)\'/', $constants_content, $matches);
 		$PHPBB_VERSION = $matches[1] ?? null;
-		if ($PHPBB_VERSION !== null && !file_exists($root_path . $checksum_file))
+		if ($PHPBB_VERSION !== null && !file_exists(ROOT_PATH . $checksum_file))
 		{
 			$checksum_file			= $checksum_file_name . '_' . $PHPBB_VERSION . $checksum_file_suffix;
 			$checksum_diff_file		= $checksum_file_name . '_' . $PHPBB_VERSION . '_diff' . $checksum_file_suffix;
@@ -92,9 +99,9 @@ $checksums_ver			= '';
 $checksums_diff_name	= '';
 $checksums_diff_ver		= '';
 $hash_list				= [];
-if (file_exists($root_path . $checksum_file))
+if (file_exists(ROOT_PATH . $checksum_file))
 {
-	load_checksum_file($root_path . $checksum_file, $checksums_name, $checksums_ver, 1, $hash_list);
+	load_checksum_file(ROOT_PATH . $checksum_file, $checksums_name, $checksums_ver, 1, $hash_list);
 }
 else
 {
@@ -102,9 +109,9 @@ else
 	terminate("checksum file [{$checksum_file}] not found");
 }
 
-if (file_exists($root_path . $checksum_diff_file))
+if (file_exists(ROOT_PATH . $checksum_diff_file))
 {
-	load_checksum_file($root_path . $checksum_diff_file, $checksums_diff_name, $checksums_diff_ver, 2, $hash_list);
+	load_checksum_file(ROOT_PATH . $checksum_diff_file, $checksums_diff_name, $checksums_diff_ver, 2, $hash_list);
 }
 
 $count_checksums		= count($hash_list);
@@ -113,9 +120,9 @@ $checksums_count_len	= strlen($count_checksums);
 /*
 * Load and check the external ignore list
 */
-if (file_exists($root_path . $ignore_file))
+if (file_exists(ROOT_PATH . $ignore_file))
 {
-	$import_list	= @file($root_path . $ignore_file, FILE_IGNORE_NEW_LINES);
+	$import_list	= @file(ROOT_PATH . $ignore_file, FILE_IGNORE_NEW_LINES);
 	$line_num		= 0;
 	$error_messages	= '';
 	if ($import_list !== false)
@@ -144,9 +151,9 @@ if (file_exists($root_path . $ignore_file))
 /*
 * Load and check the external exception list
 */
-if (file_exists($root_path . $exceptions_file))
+if (file_exists(ROOT_PATH . $exceptions_file))
 {
-	$import_list = @file($root_path . $exceptions_file, FILE_IGNORE_NEW_LINES);
+	$import_list = @file(ROOT_PATH . $exceptions_file, FILE_IGNORE_NEW_LINES);
 	$line_num		= 0;
 	$error_messages	= '';
 	if ($import_list !== false)
@@ -164,7 +171,7 @@ if (file_exists($root_path . $exceptions_file))
 			add_list_lines($error_messages);
 			terminate("exception list [{$exceptions_file}] has the following issues:" . EOL . $error_messages);
 		}
-		$exceptions_list = array_merge($exceptions_list, $import_list);
+		$exception_list = array_merge($exception_list, $import_list);
 	}
 	else
 	{
@@ -177,7 +184,7 @@ if (file_exists($root_path . $exceptions_file))
 */
 $output .= sprintf('phpBB Version: %1$s', $PHPBB_VERSION ?? $unknown) . EOL;
 $output .= sprintf('MD5 Version 1: %1$s (%2$s) %3$s', $checksums_ver, $checksums_name, $checksum_select_mode) . EOL;
-if (file_exists($root_path . $checksum_diff_file))
+if (file_exists(ROOT_PATH . $checksum_diff_file))
 {
 	$output .= sprintf('MD5 Version 2: %1$s (%2$s) %3$s', $checksums_diff_ver, $checksums_diff_name, $checksum_select_mode) . EOL;
 }
@@ -199,54 +206,44 @@ $count_notice		= 0;
 $count_ignored		= 0;
 $count_exceptions	= 0;
 $count_checked		= 0;
-$results_list		= [];
+$result_list		= [];
+$result_struct		= function (string &$file, array &$hash_data, string $msg_type, string $msg): array
+{
+	return [
+		'path'			=> dirname($file),
+		'hash_file_id'	=> $hash_data['hash_file_id'],
+		'hash_line_num'	=> $hash_data['hash_line_num'],
+		'msg_type'		=> $msg_type,
+		'file'			=> $file,
+		'msg'			=> $msg,
+	];
+};
 foreach ($hash_list as $file => $hash_data)
 {
 	$is_ignored = is_ignored($file, $ignore_list);
-	if ($is_ignored || is_exception($file, $exceptions_list, $root_path))
+	if ($is_ignored || is_exception($file, $exception_list))
 	{
 		if ($debug_mode)
 		{
 			if ($is_ignored)
 			{
 				$count_ignored++;
-				$results_list[] = [
-					'path'			=> dirname($file),
-					'hash_file_id'	=> $hash_data[0]['hash_file_id'],
-					'hash_line_num'	=> $hash_data[0]['hash_line_num'],
-					'msg_type'		=> '- IGNORED',
-					'file'			=> $file,
-					'msg'			=> '',
-				];
+				$result_list[] = $result_struct($file, $hash_data[0], '- IGNORED', '');
 			}
 			else
 			{
 				$count_exceptions++;
-				$results_list[] = [
-					'path'			=> dirname($file),
-					'hash_file_id'	=> $hash_data[0]['hash_file_id'],
-					'hash_line_num'	=> $hash_data[0]['hash_line_num'],
-					'msg_type'		=> '- EXCEPTION',
-					'file'			=> $file,
-					'msg'			=> '',
-				];
+				$result_list[] = $result_struct($file, $hash_data[0], '- EXCEPTION', '');
 			}
 		}
 		continue;
 	}
 
 	$count_checked++;
-	if (!file_exists($root_path . $file))
+	if (!file_exists(ROOT_PATH . $file))
 	{
 		$count_missing++;
-		$results_list[] = [
-			'path'			=> dirname($file),
-			'hash_file_id'	=> $hash_data[0]['hash_file_id'],
-			'hash_line_num'	=> $hash_data[0]['hash_line_num'],
-			'msg_type'		=> '! MISSING',
-			'file'			=> $file,
-			'msg'			=> '',
-		];
+		$result_list[] = $result_struct($file, $hash_data[0], '! MISSING', '');
 		continue;
 	}
 
@@ -257,31 +254,17 @@ foreach ($hash_list as $file => $hash_data)
 			if ($filesize === 0)
 			{
 				$count_warning++;
-				$results_list[] = [
-					'path'			=> dirname($file),
-					'hash_file_id'	=> $hash_data[0]['hash_file_id'],
-					'hash_line_num'	=> $hash_data[0]['hash_line_num'],
-					'msg_type'		=> '! WARNING',
-					'file'			=> $file,
-					'msg'			=> 'has 0 bytes',
-				];
+				$result_list[] = $result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes');
 			}
 			else if ($filesize === false)
 			{
 				$count_error++;
-				$results_list[] = [
-					'path'			=> dirname($file),
-					'hash_file_id'	=> $hash_data[0]['hash_file_id'],
-					'hash_line_num'	=> $hash_data[0]['hash_line_num'],
-					'msg_type'		=> '~ ERROR',
-					'file'			=> $file,
-					'msg'			=> 'file size could not be determined',
-				];
+				$result_list[] = $result_struct($file, $hash_data[0], '~ ERROR', 'file size could not be determined');
 			}
 			continue 2;
 	}
 
-	$hash_calc = @md5_file($root_path . $file);
+	$hash_calc = @md5_file(ROOT_PATH . $file);
 	if ($hash_calc !== false)
 	{
 		if ($hash_data[0]['hash'] != $hash_calc)
@@ -289,55 +272,34 @@ foreach ($hash_list as $file => $hash_data)
 			if (($hash_data[1]['hash'] ?? '') == $hash_calc)
 			{
 				$count_notice++;
-				$results_list[] = [
-					'path'			=> dirname($file),
-					'hash_file_id'	=> $hash_data[1]['hash_file_id'],
-					'hash_line_num'	=> $hash_data[1]['hash_line_num'],
-					'msg_type'		=> '  NOTICE',
-					'file'			=> $file,
-					'msg'			=> 'has the ' . $checksums_diff_name . ' hash',
-				];
+				$result_list[] = $result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksums_diff_name . ' hash');
 			}
 			else
 			{
 				$count_changed++;
-				$results_list[] = [
-					'path'			=> dirname($file),
-					'hash_file_id'	=> $hash_data[0]['hash_file_id'],
-					'hash_line_num'	=> $hash_data[0]['hash_line_num'],
-					'msg_type'		=> '* CHANGED',
-					'file'			=> $file,
-					'msg'			=> '(hash: ' . $hash_calc . ')',
-				];
+				$result_list[] = $result_struct($file, $hash_data[0], '* CHANGED', '(hash: ' . $hash_calc . ')');
 			}
 		}
 	}
 	else
 	{
 		$count_error++;
-		$results_list[] = [
-			'path'			=> dirname($file),
-			'hash_file_id'	=> $hash_data[0]['hash_file_id'],
-			'hash_line_num'	=> $hash_data[0]['hash_line_num'],
-			'msg_type'		=> '~ ERROR',
-			'file'			=> $file,
-			'msg'			=> 'MD5 hash could not be calculated',
-		];
+		$result_list[] = $result_struct($file, $hash_data[0], '~ ERROR', 'MD5 hash could not be calculated');
 	}
 }
 
 /*
 * Format results and add to display buffer
 */
-if (count($results_list) > 0)
+if (count($result_list) > 0)
 {
-	uasort($results_list, function($a, $b) {
+	uasort($result_list, function($a, $b) {
 		return [$a['path'], $a['file']] <=> [$b['path'], $b['file']];
 	});
 
-	$line_num_len = column_max_len($results_list, 'hash_line_num');
-	$msg_type_len = column_max_len($results_list, 'msg_type');
-	foreach ($results_list as $row)
+	$line_num_len = column_max_len($result_list, 'hash_line_num');
+	$msg_type_len = column_max_len($result_list, 'msg_type');
+	foreach ($result_list as $row)
 	{
 		$output .= sprintf('{%1$u:%2$ ' . $line_num_len . 'u} %3$ -' . $msg_type_len . 's: [%4$s]%5$s',
 			/* 1 */ $row['hash_file_id'],
@@ -390,12 +352,11 @@ flush_buffer();
 * Script end
 */
 
-function is_ignored(string $file, array &$ignore_list): bool
+function is_ignored(string &$file, array &$ignore_list): bool
 {
 	foreach ($ignore_list as $ignored)
 	{
-		$regex = @preg_match($ignored, $file);
-		if ($regex !== false && $regex)
+		if (preg_match($ignored, $file) === 1)
 		{
 			return true;
 		}
@@ -403,11 +364,11 @@ function is_ignored(string $file, array &$ignore_list): bool
 	return false;
 }
 
-function is_exception(string $file, array &$exceptions_list, string $root_path): bool
+function is_exception(string &$file, array &$exception_list): bool
 {
-	foreach ($exceptions_list as $exception)
+	foreach ($exception_list as $exception)
 	{
-		if (strpos($file, $exception) === 0 && !file_exists($root_path . $exception))
+		if (strpos($file, $exception) === 0 && !file_exists(ROOT_PATH . $exception))
 		{
 			return true;
 		}
@@ -499,26 +460,21 @@ function load_checksum_file(string $checksum_file, string &$checksums_name, stri
 		preg_match('/^([0-9a-f]{32}) \*([' . VALID_CHARS . ']+)$/', $row, $matches);
 		if (is_array($matches) && count($matches) == 3)
 		{
-			$hash = $matches[1];
-			$file = $matches[2];
+			$hash			= $matches[1];
+			$file			= $matches[2];
+			$hash_struct	= [
+				'hash_file_id'	=> $hash_file_id,
+				'hash_line_num'	=> $line_num,
+				'hash'			=> $hash,
+			];
 
 			if (isset($hash_list[$file]))
 			{
-				$hash_list[$file][] = [
-					'hash_file_id'	=> $hash_file_id,
-					'hash_line_num'	=> $line_num,
-					'hash'			=> $hash,
-				];
+				$hash_list[$file][] = $hash_struct;
 			}
 			else
 			{
-				$hash_list[$file] = [
-					[
-						'hash_file_id'	=> $hash_file_id,
-						'hash_line_num'	=> $line_num,
-						'hash'			=> $hash,
-					]
-				];
+				$hash_list[$file] = [$hash_struct];
 			}
 		}
 		else
