@@ -1,3 +1,15 @@
+### 1.2.0
+(2023-12-10)
+
+* Freigegeben für PHP 8.3.
+* Bei Verwendung im Browser folgende Änderungen: 
+  * Der Bericht wird jetzt inklusive dem BBcode "Code" generiert, damit man den Bericht direkt in einem Forenbeitrag einfügen kann.
+  * Am Ende des Berichts wird jetzt ein Button angeboten, mit dem der Bericht direkt in die Zwischenablage kopiert werden kann. Eine kurzfristige Anzeige (3 Sekunden) rechts neben dem Button informiert darüber, ob der Vorgang erfolgreich war.
+* Sonstiges:
+  * Prüfung der Voraussetzungen angepasst.
+  * Eine JS Funktion für das Kopieren in die Zwischenablage eingebaut.
+  * Inline-CSS auf Internal-CSS geändert.
+
 ### 1.1.3
 (2023-10-07)
 

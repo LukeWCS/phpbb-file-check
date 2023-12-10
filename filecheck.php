@@ -13,7 +13,7 @@
 /*
 * Check requirements
 */
-if (!(version_compare(PHP_VERSION, '7.1.0', '>=') && version_compare(PHP_VERSION, '8.3.0-dev', '<')))
+if (!(version_compare(PHP_VERSION, '7.1.0', '>=') && version_compare(PHP_VERSION, '8.4.0-dev', '<')))
 {
 	echo 'phpBB File Check: Invalid PHP Version ' . PHP_VERSION;
 	exit;
@@ -38,7 +38,7 @@ $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $constants_file			= 'includes/constants.php';
 
-$ver					= '1.1.3';
+$ver					= '1.2.0';
 $title					= "phpBB File Check v{$ver}";
 $unknown				= '{unknown}';
 $output					= html_start();
@@ -153,7 +153,7 @@ if (file_exists(ROOT_PATH . $ignore_file))
 */
 if (file_exists(ROOT_PATH . $exceptions_file))
 {
-	$import_list = @file(ROOT_PATH . $exceptions_file, FILE_IGNORE_NEW_LINES);
+	$import_list	= @file(ROOT_PATH . $exceptions_file, FILE_IGNORE_NEW_LINES);
 	$line_num		= 0;
 	$error_messages	= '';
 	if ($import_list !== false)
@@ -400,15 +400,58 @@ function html_start(): string
 	$output = '';
 	if (IS_BROWSER)
 	{
-		$output .= '<!DOCTYPE HTML>' . EOL;
-		$output .= '<html>' . EOL;
-		$output .= '<head>' . EOL;
-		$output .= '	<title>phpBB File Check</title>' . EOL;
-		$output .= '	<meta name="robots" content="noindex">' . EOL;
-		$output .= '</head>' . EOL;
-		$output .= '<body style="font-size: 1.1em;">' . EOL;
-		$output .= '<pre>' . EOL;
+		$output .= trim('
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>phpBB File Check</title>
+	<meta name="robots" content="noindex">
+	<script>
+		function copyReport()
+		{
+			var msg = document.getElementsByClassName(\'msg\')[0];
+			var button = document.getElementsByTagName(\'button\')[0];
+			var range = document.createRange();
+
+			button.disabled = true;
+			range.selectNode(document.getElementsByTagName(\'pre\')[0]);
+			window.getSelection().addRange(range);
+			try {
+				document.execCommand(\'copy\');
+				msg.innerHTML = \'Copy successful\';
+			} catch (error) {
+				console.error(error);
+				msg.innerHTML = \'Copy failed!\';
+			}
+			window.getSelection().removeAllRanges();
+			msg.style.display = "inline-block";
+			setTimeout(function() {
+				msg.style.display = "none";
+				button.disabled = false;
+			}, 3000);
+		}
+	</script>
+	<style>
+		body {
+			font-size: 1.1em;
+		}
+		.prevent-select {
+			-webkit-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+		}
+		.msg {
+			font-family: verdana;
+			font-size: 0.8em;
+		}
+	</style>
+</head>
+<body>
+<pre>
+[code]
+		') . EOL;
 	}
+
 	return $output;
 }
 
@@ -417,10 +460,19 @@ function html_end(): string
 	$output = '';
 	if (IS_BROWSER)
 	{
-		$output .= '</pre>' . EOL;
-		$output .= '</body>' . EOL;
-		$output .= '</html>' . EOL;
+		$output .= trim('
+[/code]
+</pre>
+<hr>
+<div class="prevent-select">
+	<button onclick="copyReport();">Copy to clipboard</button>
+	<span class="msg" style="display: none;">msg</span>
+</div>
+</body>
+</html>
+		') . EOL;
 	}
+
 	return $output;
 }
 
