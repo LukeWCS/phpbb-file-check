@@ -4,3 +4,4 @@
 .editorconfig export-ignore
 .gitattributes export-ignore
 phpbb-file-check_changelog_de.md export-ignore
+README.md export-ignore

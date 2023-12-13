@@ -38,7 +38,7 @@ $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $constants_file			= 'includes/constants.php';
 
-$ver					= '1.2.0';
+$ver					= '1.2.1';
 $title					= "phpBB File Check v{$ver}";
 $unknown				= '{unknown}';
 $output					= html_start();
@@ -400,37 +400,12 @@ function html_start(): string
 	$output = '';
 	if (IS_BROWSER)
 	{
-		$output .= trim('
+		$output .= <<<'_HTML_'
 <!DOCTYPE HTML>
 <html>
 <head>
 	<title>phpBB File Check</title>
 	<meta name="robots" content="noindex">
-	<script>
-		function copyReport()
-		{
-			var msg = document.getElementsByClassName(\'msg\')[0];
-			var button = document.getElementsByTagName(\'button\')[0];
-			var range = document.createRange();
-
-			button.disabled = true;
-			range.selectNode(document.getElementsByTagName(\'pre\')[0]);
-			window.getSelection().addRange(range);
-			try {
-				document.execCommand(\'copy\');
-				msg.innerHTML = \'Copy successful\';
-			} catch (error) {
-				console.error(error);
-				msg.innerHTML = \'Copy failed!\';
-			}
-			window.getSelection().removeAllRanges();
-			msg.style.display = "inline-block";
-			setTimeout(function() {
-				msg.style.display = "none";
-				button.disabled = false;
-			}, 3000);
-		}
-	</script>
 	<style>
 		body {
 			font-size: 1.1em;
@@ -440,16 +415,25 @@ function html_start(): string
 			-ms-user-select: none;
 			user-select: none;
 		}
-		.msg {
+		#result-message {
 			font-family: verdana;
 			font-size: 0.8em;
+		}
+		.msg-success:before {
+			color: limegreen;
+			content: "\2714\0020";
+		}
+		.msg-error:before {
+			color: red;
+			content: "\2716\0020";
 		}
 	</style>
 </head>
 <body>
 <pre>
 [code]
-		') . EOL;
+
+_HTML_;
 	}
 
 	return $output;
@@ -460,17 +444,62 @@ function html_end(): string
 	$output = '';
 	if (IS_BROWSER)
 	{
-		$output .= trim('
+		$output .= <<<'_HTML_'
 [/code]
 </pre>
 <hr>
 <div class="prevent-select">
-	<button onclick="copyReport();">Copy to clipboard</button>
-	<span class="msg" style="display: none;">msg</span>
+	<button>Copy report to clipboard</button> <span id="result-message" hidden>message</span>
 </div>
+<script>
+	function copyReport()
+	{
+		const button = this;
+		const message = document.querySelector('#result-message');
+
+		button.disabled = true;
+		if (navigator.clipboard) {
+			try {
+				navigator.clipboard.writeText(document.querySelector('pre').innerHTML);
+				message.className = 'msg-success';
+				message.innerHTML = 'copy successful';
+			} catch (err) {
+				console.error(err);
+				message.className = 'msg-error';
+				message.innerHTML = 'copy failed!';
+			}
+		} else {
+			const selection = window.getSelection();
+			const range = document.createRange();
+
+			range.selectNode(document.querySelector('pre'));
+			selection.removeAllRanges();
+			selection.addRange(range);
+			try {
+				document.execCommand('copy');
+				message.className = 'msg-success';
+				message.innerHTML = 'copy successful';
+			} catch (err) {
+				console.error(err);
+				message.className = 'msg-error';
+				message.innerHTML = 'copy failed!';
+			}
+			selection.removeAllRanges();
+		}
+		message.hidden = false;
+		setTimeout(function() {
+			message.hidden = true;
+			button.disabled = false;
+		}, 3000);
+	}
+	document.addEventListener('DOMContentLoaded', function() {
+		document.querySelector('button').addEventListener('click', copyReport);
+	});
+</script>
 </body>
 </html>
-		') . EOL;
+
+_HTML_;
 	}
 
 	return $output;

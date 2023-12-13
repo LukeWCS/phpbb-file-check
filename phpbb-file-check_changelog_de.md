@@ -1,9 +1,18 @@
+### 1.2.1
+(2023-12-13)
+* Fix: Wenn beim Klick auf den Button bereits teilweise Text ausgewählt war, dann wurde nur dieser markierte Bereich in die Zwischenablage kopiert, anstatt dem vollständigen Bericht.
+* Nach dem Klick auf den Button signalisiert zusätzlich ein Icon über den Vorgang: Grüner Haken (erfolgreich), rotes Kreuz (fehlgeschlagen).
+* Sonstiges:
+  * JS: 
+    * Da das Kopieren von Text in die Zwischenablage mittels `document.execCommand('copy')` zugunsten der Clipboard API missbilligt ist und seit Jahren als DEPREACTED eingestuft ist, wird jetzt vorrangig die Clipboard API verwendet. Sollte diese nicht vorhanden sein, z.B. in einem Kontext wo SSL fehlt, wird als Fallback die alte Methode verwendet, solange diese noch funktioniert.
+    * Code verbessert.
+
 ### 1.2.0
 (2023-12-10)
 
 * Freigegeben für PHP 8.3.
 * Bei Verwendung im Browser folgende Änderungen: 
-  * Der Bericht wird jetzt inklusive dem BBcode "Code" generiert, damit man den Bericht direkt in einem Forenbeitrag einfügen kann.
+  * Der Bericht wird jetzt inklusive dem BBcode `[code][/code]` generiert, damit man den Bericht direkt in einem Forenbeitrag einfügen kann.
   * Am Ende des Berichts wird jetzt ein Button angeboten, mit dem der Bericht direkt in die Zwischenablage kopiert werden kann. Eine kurzfristige Anzeige (3 Sekunden) rechts neben dem Button informiert darüber, ob der Vorgang erfolgreich war.
 * Sonstiges:
   * Prüfung der Voraussetzungen angepasst.
