@@ -1,5 +1,16 @@
+### 1.2.2
+(2023-12-24)
+
+* Bei einer Datei die 0 Bytes aufweist, jedoch laut Hash nicht leer sein sollte, wird jetzt statt `* CHANGED` die Stufe `! WARNING` gemeldet mit dem Text `has 0 bytes`.
+* Sonstiges:
+  * JS: 
+    * Sollte das Kopieren in die Zwischenablage fehlschlagen, bleibt die Fehlermeldung jetzt bestehen und wird nicht mehr nach 3 Sekunden ausgeblendet.
+    * Um zukünftige Probleme mit Sonderzeichen zu vermeiden, wird jetzt nicht mehr das HTML des Berichts, sondern der dargestellte Text kopiert.
+  * Code Optimierung.
+
 ### 1.2.1
 (2023-12-13)
+
 * Fix: Wenn beim Klick auf den Button bereits teilweise Text ausgewählt war, dann wurde nur dieser markierte Bereich in die Zwischenablage kopiert, anstatt dem vollständigen Bericht.
 * Nach dem Klick auf den Button signalisiert zusätzlich ein Icon über den Vorgang: Grüner Haken (erfolgreich), rotes Kreuz (fehlgeschlagen).
 * Sonstiges:

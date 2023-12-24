@@ -37,8 +37,9 @@ $checksum_select_mode	= 'MANUALLY';
 $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $constants_file			= 'includes/constants.php';
+$hash_empty_file		= 'd41d8cd98f00b204e9800998ecf8427e';
 
-$ver					= '1.2.1';
+$ver					= '1.2.2';
 $title					= "phpBB File Check v{$ver}";
 $unknown				= '{unknown}';
 $output					= html_start();
@@ -207,8 +208,9 @@ $count_ignored		= 0;
 $count_exceptions	= 0;
 $count_checked		= 0;
 $result_list		= [];
-$result_struct		= function (string &$file, array &$hash_data, string $msg_type, string $msg): array
+$result_struct		= function (string &$file, array &$hash_data, string $msg_type, string $msg, int &$counter): array
 {
+	$counter++;
 	return [
 		'path'			=> dirname($file),
 		'hash_file_id'	=> $hash_data['hash_file_id'],
@@ -227,13 +229,11 @@ foreach ($hash_list as $file => $hash_data)
 		{
 			if ($is_ignored)
 			{
-				$count_ignored++;
-				$result_list[] = $result_struct($file, $hash_data[0], '- IGNORED', '');
+				$result_list[] = $result_struct($file, $hash_data[0], '- IGNORED', '', $count_ignored);
 			}
 			else
 			{
-				$count_exceptions++;
-				$result_list[] = $result_struct($file, $hash_data[0], '- EXCEPTION', '');
+				$result_list[] = $result_struct($file, $hash_data[0], '- EXCEPTION', '', $count_exceptions);
 			}
 		}
 		continue;
@@ -242,49 +242,39 @@ foreach ($hash_list as $file => $hash_data)
 	$count_checked++;
 	if (!file_exists(ROOT_PATH . $file))
 	{
-		$count_missing++;
-		$result_list[] = $result_struct($file, $hash_data[0], '! MISSING', '');
+		$result_list[] = $result_struct($file, $hash_data[0], '! MISSING', '', $count_missing);
 		continue;
-	}
-
-	switch ($file)
-	{
-		case 'config.php':
-			$filesize = @filesize($file);
-			if ($filesize === 0)
-			{
-				$count_warning++;
-				$result_list[] = $result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes');
-			}
-			else if ($filesize === false)
-			{
-				$count_error++;
-				$result_list[] = $result_struct($file, $hash_data[0], '~ ERROR', 'file size could not be determined');
-			}
-			continue 2;
 	}
 
 	$hash_calc = @md5_file(ROOT_PATH . $file);
 	if ($hash_calc !== false)
 	{
-		if ($hash_data[0]['hash'] != $hash_calc)
+		if ($file == 'config.php')
+		{
+			if ($hash_calc == $hash_empty_file)
+			{
+				$result_list[] = $result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes', $count_warning);
+			}
+		}
+		else if ($hash_data[0]['hash'] != $hash_calc)
 		{
 			if (($hash_data[1]['hash'] ?? '') == $hash_calc)
 			{
-				$count_notice++;
-				$result_list[] = $result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksums_diff_name . ' hash');
+				$result_list[] = $result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksums_diff_name . ' hash', $count_notice);
+			}
+			else if ($hash_calc == $hash_empty_file)
+			{
+				$result_list[] = $result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes', $count_warning);
 			}
 			else
 			{
-				$count_changed++;
-				$result_list[] = $result_struct($file, $hash_data[0], '* CHANGED', '(hash: ' . $hash_calc . ')');
+				$result_list[] = $result_struct($file, $hash_data[0], '* CHANGED', '(hash: ' . $hash_calc . ')', $count_changed);
 			}
 		}
 	}
 	else
 	{
-		$count_error++;
-		$result_list[] = $result_struct($file, $hash_data[0], '~ ERROR', 'MD5 hash could not be calculated');
+		$result_list[] = $result_struct($file, $hash_data[0], '~ ERROR', 'MD5 hash could not be calculated', $count_error);
 	}
 }
 
@@ -460,7 +450,7 @@ function html_end(): string
 		button.disabled = true;
 		if (navigator.clipboard) {
 			try {
-				navigator.clipboard.writeText(document.querySelector('pre').innerHTML);
+				navigator.clipboard.writeText(document.querySelector('pre').innerText);
 				message.className = 'msg-success';
 				message.innerHTML = 'copy successful';
 			} catch (err) {
@@ -488,7 +478,7 @@ function html_end(): string
 		}
 		message.hidden = false;
 		setTimeout(function() {
-			message.hidden = true;
+			message.hidden = (message.className == 'msg-success');
 			button.disabled = false;
 		}, 3000);
 	}
