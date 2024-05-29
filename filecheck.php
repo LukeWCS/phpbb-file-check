@@ -15,7 +15,7 @@
 */
 if (!(version_compare(PHP_VERSION, '7.1.0', '>=') && version_compare(PHP_VERSION, '8.4.0-dev', '<')))
 {
-	echo 'phpBB File Check: Invalid PHP Version ' . PHP_VERSION;
+	echo 'File Check error: Invalid PHP Version ' . PHP_VERSION;
 	exit;
 }
 
@@ -27,26 +27,29 @@ define('VALID_CHARS'	, 'a-zA-Z0-9\/\-_.');
 define('IS_BROWSER'		, $_SERVER['HTTP_USER_AGENT'] ?? '' != '');
 define('ROOT_PATH'		, __DIR__ . '/');
 
-$debug_mode				= false;
+$debug_mode				= 0;
 
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
 $checksum_file			= $checksum_file_name . $checksum_file_suffix;
 $checksum_diff_file		= $checksum_file_name . '_diff' . $checksum_file_suffix;
-$checksum_select_mode	= 'MANUALLY';
 $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $constants_file			= 'includes/constants.php';
-$hash_empty_file		= 'd41d8cd98f00b204e9800998ecf8427e';
+$checksum_select_mode	= 'Manually';
+$empty_file_hash		= 'd41d8cd98f00b204e9800998ecf8427e';
 
-$ver					= '1.2.2';
+$ver					= '1.3.0';
 $title					= "phpBB File Check v{$ver}";
 $unknown				= '{unknown}';
 $output					= html_start();
+$summary				= '';
+$exec_info				= '';
 $start_time				= microtime(true);
 
 $ignore_list = [
-	'/^\.git|\/\.git/',
+	'^\.git',
+	'\/\.git',
 ];
 
 $exception_list = [
@@ -75,7 +78,7 @@ if (file_exists(ROOT_PATH . $constants_file))
 		{
 			$checksum_file			= $checksum_file_name . '_' . $PHPBB_VERSION . $checksum_file_suffix;
 			$checksum_diff_file		= $checksum_file_name . '_' . $PHPBB_VERSION . '_diff' . $checksum_file_suffix;
-			$checksum_select_mode	= 'AUTO';
+			$checksum_select_mode	= 'Auto';
 		}
 		if ($PHPBB_VERSION === null)
 		{
@@ -131,7 +134,7 @@ if (file_exists(ROOT_PATH . $ignore_file))
 		foreach ($import_list as $row)
 		{
 			$line_num++;
-			if (@preg_match($row, '') === false)
+			if (@preg_match('/' . $row . '/', '') === false)
 			{
 				$error_messages .= "line {$line_num}: [{$row}] contains invalid RegEx" . EOL;
 			}
@@ -148,6 +151,7 @@ if (file_exists(ROOT_PATH . $ignore_file))
 		terminate("ignore list [{$ignore_file}] could not be read");
 	}
 }
+$ignore_list_regex = implode('|', $ignore_list);
 
 /*
 * Load and check the external exception list
@@ -173,6 +177,7 @@ if (file_exists(ROOT_PATH . $exceptions_file))
 			terminate("exception list [{$exceptions_file}] has the following issues:" . EOL . $error_messages);
 		}
 		$exception_list = array_merge($exception_list, $import_list);
+		sort($exception_list);
 	}
 	else
 	{
@@ -183,18 +188,33 @@ if (file_exists(ROOT_PATH . $exceptions_file))
 /*
 * Display: versions and number of checksums
 */
+$output .= sprintf('Version mode : %1$s', $checksum_select_mode) . EOL;
 $output .= sprintf('phpBB Version: %1$s', $PHPBB_VERSION ?? $unknown) . EOL;
-$output .= sprintf('MD5 Version 1: %1$s (%2$s) %3$s', $checksums_ver, $checksums_name, $checksum_select_mode) . EOL;
+$output .= sprintf('MD5 Version 1: %1$s (%2$s)', $checksums_ver, $checksums_name) . EOL;
 if (file_exists(ROOT_PATH . $checksum_diff_file))
 {
-	$output .= sprintf('MD5 Version 2: %1$s (%2$s) %3$s', $checksums_diff_ver, $checksums_diff_name, $checksum_select_mode) . EOL;
+	$output .= sprintf('MD5 Version 2: %1$s (%2$s)', $checksums_diff_ver, $checksums_diff_name) . EOL;
 }
 $output .= sprintf('PHP Version  : %1$s (%2$s)', PHP_VERSION, PHP_OS) . EOL;
-
 $output .= EOL;
 $output .= 'Please wait, ' . $count_checksums . ' checksums are being processed...' . EOL;
 
-flush_buffer();
+if (IS_BROWSER)
+{
+	if (session_start() && ($_SESSION['exec_check'] ?? 0) !== 1)
+	{
+		$_SESSION['exec_check'] = 1;
+		header('refresh: 0; url=filecheck.php');
+		$output .= html_end(false);
+		flush_buffer();
+		exit;
+	}
+	$_SESSION = [];
+}
+else
+{
+	flush_buffer();
+}
 
 /*
 * The core - processing checksums
@@ -212,17 +232,17 @@ $result_struct		= function (string &$file, array &$hash_data, string $msg_type, 
 {
 	$counter++;
 	return [
+		'file'			=> $file,
 		'path'			=> dirname($file),
 		'hash_file_id'	=> $hash_data['hash_file_id'],
 		'hash_line_num'	=> $hash_data['hash_line_num'],
 		'msg_type'		=> $msg_type,
-		'file'			=> $file,
 		'msg'			=> $msg,
 	];
 };
 foreach ($hash_list as $file => $hash_data)
 {
-	$is_ignored = is_ignored($file, $ignore_list);
+	$is_ignored = is_ignored($file, $ignore_list_regex);
 	if ($is_ignored || is_exception($file, $exception_list))
 	{
 		if ($debug_mode)
@@ -246,29 +266,29 @@ foreach ($hash_list as $file => $hash_data)
 		continue;
 	}
 
-	$hash_calc = @md5_file(ROOT_PATH . $file);
-	if ($hash_calc !== false)
+	$calc_hash = @md5_file(ROOT_PATH . $file);
+	if ($calc_hash !== false)
 	{
 		if ($file == 'config.php')
 		{
-			if ($hash_calc == $hash_empty_file)
+			if ($calc_hash == $empty_file_hash)
 			{
 				$result_list[] = $result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes', $count_warning);
 			}
 		}
-		else if ($hash_data[0]['hash'] != $hash_calc)
+		else if ($hash_data[0]['hash'] != $calc_hash)
 		{
-			if (($hash_data[1]['hash'] ?? '') == $hash_calc)
+			if (($hash_data[1]['hash'] ?? '') == $calc_hash)
 			{
 				$result_list[] = $result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksums_diff_name . ' hash', $count_notice);
 			}
-			else if ($hash_calc == $hash_empty_file)
+			else if ($calc_hash == $empty_file_hash)
 			{
 				$result_list[] = $result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes', $count_warning);
 			}
 			else
 			{
-				$result_list[] = $result_struct($file, $hash_data[0], '* CHANGED', '(hash: ' . $hash_calc . ')', $count_changed);
+				$result_list[] = $result_struct($file, $hash_data[0], '* CHANGED', '(hash: ' . $calc_hash . ')', $count_changed);
 			}
 		}
 	}
@@ -276,6 +296,11 @@ foreach ($hash_list as $file => $hash_data)
 	{
 		$result_list[] = $result_struct($file, $hash_data[0], '~ ERROR', 'MD5 hash could not be calculated', $count_error);
 	}
+}
+
+if (IS_BROWSER)
+{
+	flush_buffer();
 }
 
 /*
@@ -304,36 +329,47 @@ else
 {
 	$output = 'no issues found' . EOL ;
 }
-
 add_list_lines($output);
 
 /*
 * Display: results and summary
 */
-$output .= EOL;
 if ($debug_mode)
 {
-	$output .= sprintf('Ignored      : % ' . $checksums_count_len . 'u', $count_ignored) . EOL;
-	$output .= sprintf('Exceptions   : % ' . $checksums_count_len . 'u', $count_exceptions) . EOL;
+	$summary .= sprintf('Ignored      : % ' . $checksums_count_len . 'u', $count_ignored) . EOL;
+	$summary .= sprintf('Exceptions   : % ' . $checksums_count_len . 'u', $count_exceptions) . EOL;
 }
-$output .= sprintf('Checked files: % ' . $checksums_count_len . 'u', $count_checked) . EOL;
-$output .= sprintf('Missing files: % ' . $checksums_count_len . 'u', $count_missing) . EOL;
+$summary .= sprintf('Checked files: % ' . $checksums_count_len . 'u', $count_checked) . EOL;
+$summary .= sprintf('Missing files: % ' . $checksums_count_len . 'u', $count_missing) . EOL;
 if ($count_warning || $debug_mode)
 {
-	$output .= sprintf('Warnings     : % ' . $checksums_count_len . 'u', $count_warning) . EOL;
+	$summary .= sprintf('Warnings     : % ' . $checksums_count_len . 'u', $count_warning) . EOL;
 }
-$output .= sprintf('Changed files: % ' . $checksums_count_len . 'u', $count_changed) . EOL;
+$summary .= sprintf('Changed files: % ' . $checksums_count_len . 'u', $count_changed) . EOL;
 if ($count_notice || $debug_mode)
 {
-	$output .= sprintf('Notices      : % ' . $checksums_count_len . 'u', $count_notice) . EOL;
+	$summary .= sprintf('Notices      : % ' . $checksums_count_len . 'u', $count_notice) . EOL;
 }
 if ($count_error || $debug_mode)
 {
-	$output .= sprintf('Errors       : % ' . $checksums_count_len . 'u', $count_error) . EOL;
+	$summary .= sprintf('FC Errors    : % ' . $checksums_count_len . 'u', $count_error) . EOL;
 }
 
+$exec_info .= sprintf('Run time          : %.3f seconds', microtime(true) - $start_time) . EOL;
+$exec_info .= sprintf('Max execution time: %u seconds', ini_get('max_execution_time')) . EOL;
+$exec_info .= sprintf('Memory peak usage : %s bytes', number_format(memory_get_peak_usage())) . EOL;
+$exec_info .= sprintf('Memory limit      : %s',  ini_get('memory_limit')) . EOL;
+
 $output .= EOL;
-$output .= sprintf('Finished! Run time: %.3f seconds', microtime(true) - $start_time) . EOL;
+$output .= 'Finished!' . EOL;
+$output .= EOL;
+$output .= 'Report summary' . EOL;
+$output .= str_repeat('-', column_max_len($summary)) . EOL;
+$output .= $summary;
+$output .= EOL;
+$output .= 'Script/PHP Information' . EOL;
+$output .= str_repeat('-', column_max_len($exec_info)) . EOL;
+$output .= $exec_info;
 $output .= html_end();
 
 flush_buffer();
@@ -342,14 +378,11 @@ flush_buffer();
 * Script end
 */
 
-function is_ignored(string &$file, array &$ignore_list): bool
+function is_ignored(string &$file, &$ignore_list_regex = ''): bool
 {
-	foreach ($ignore_list as $ignored)
+	if (preg_match('/' . $ignore_list_regex . '/', $file) === 1)
 	{
-		if (preg_match($ignored, $file) === 1)
-		{
-			return true;
-		}
+		return true;
 	}
 	return false;
 }
@@ -372,14 +405,13 @@ function flush_buffer(): void
 
 	echo $output;
 	$output = '';
-	flush();
 }
 
 function terminate(string $message): void
 {
 	global $output;
 
-	$output .= "ERROR: " . $message . EOL;
+	$output .= "File Check error: " . $message . EOL;
 	$output .= html_end();
 	flush_buffer();
 	exit;
@@ -387,10 +419,12 @@ function terminate(string $message): void
 
 function html_start(): string
 {
-	$output = '';
-	if (IS_BROWSER)
+	if (!IS_BROWSER)
 	{
-		$output .= <<<'_HTML_'
+		return '';
+	}
+
+	$output = <<<'_HTML_'
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -417,26 +451,34 @@ function html_start(): string
 			color: red;
 			content: "\2716\0020";
 		}
+		.bbcode {
+			opacity: 0.3;
+		}
 	</style>
 </head>
 <body>
 <pre>
-[code]
+<span class="bbcode">[code]</span>
 
 _HTML_;
-	}
-
 	return $output;
 }
 
-function html_end(): string
+function html_end(bool $show_button = true): string
 {
-	$output = '';
-	if (IS_BROWSER)
+	if (!IS_BROWSER)
+	{
+		return '';
+	}
+
+	$output = <<<'_HTML_'
+<span class="bbcode">[/code]</span>
+</pre>
+
+_HTML_;
+	if ($show_button)
 	{
 		$output .= <<<'_HTML_'
-[/code]
-</pre>
 <hr>
 <div class="prevent-select">
 	<button>Copy report to clipboard</button> <span id="result-message" hidden>message</span>
@@ -486,20 +528,15 @@ function html_end(): string
 		document.querySelector('button').addEventListener('click', copyReport);
 	});
 </script>
+
+_HTML_;
+	}
+	$output .= <<<'_HTML_'
 </body>
 </html>
 
 _HTML_;
-	}
-
 	return $output;
-}
-
-function add_list_lines(string &$text): void
-{
-	$output_rows = array_map('strlen', explode(EOL, $text));
-	$list_separator = str_repeat('-', max($output_rows));
-	$text = EOL . $list_separator . EOL . $text . $list_separator . EOL ;
 }
 
 function load_checksum_file(string $checksum_file, string &$checksums_name, string &$checksums_ver, int $hash_file_id, array &$hash_list): void
@@ -560,8 +597,14 @@ function load_checksum_file(string $checksum_file, string &$checksums_name, stri
 	}
 }
 
-function column_max_len(array &$array, string $column_name): int
+function add_list_lines(string &$list): void
 {
-	$column = array_column($array, $column_name);
+	$list_separator = str_repeat('-', column_max_len($list));
+	$list = EOL . $list_separator . EOL . $list . $list_separator . EOL ;
+}
+
+function column_max_len($list, string $column_name = ''): int
+{
+	$column = is_array($list) ? array_column($list, $column_name) : explode(EOL, $list);
 	return max(array_map('strlen', $column));
 }

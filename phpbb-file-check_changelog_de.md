@@ -1,3 +1,17 @@
+### 1.3.0
+(2024-05-29)
+
+* Bei Ausführung der Prüfung sollte eigentlich die Einleitung mit den Versions-Informationen vorab an den Browser gesendet werden, damit erkennbar ist, dass das Tool ausgeführt wird. Die bisher verwendete Methode ist jedoch abhängig vom Server (Apache, nginx, IIS usw.) sowie von der Cache-Konfiguration des Hosters und konnte deshalb nur in sehr seltenen Fällen funktionieren und wurde entfernt. Stattdessen wird jetzt mit Sessions gearbeitet und das Skript automatisch ein zweites Mal aufgerufen, wodurch es möglich wird, die Einleitung vorab anzuzeigen. Dadurch wird beim Start des Tools eine anfängliche "weiße Seite" vermieden, da jetzt direkt signalisiert werden kann, dass alle benötigten Dateien vorhanden sind und das Tool korrekt ausgeführt wird.
+* In der Einleitung wird der Versions-Modus (Auto/Manually) nicht mehr hinter beiden MD5 Versionen angezeigt, sondern nur noch einmal in einer separaten Zeile.
+* Am Ende des Berichts werden zusätzliche Informationen in einem separaten Abschnitt gelistet:
+  * Laufzeit von File Check
+  * Neu: Maximale PHP Ausführungszeit (Hoster-abhängig)
+  * Neu: Speicherbedarf (Spitze) von File Check
+  * Neu: Maximaler PHP Speicherbedarf (Hoster-abhängig)
+* In `filecheck_ignore.txt` dürfen die einzelnen Zeilen mit RegEx Regeln kein führendes und abschliessendes `/` mehr enthalten, das wird jetzt als Fehler gemeldet.
+* Der BBcode `[code]` wird im Browser nur noch schwach dargestellt, da dieser nicht zum eigentlichen Bericht gehört und nur beim Einfügen des Berichts in einem Forenbeitrag relevant ist.
+* Code Optimierung.
+
 ### 1.2.2
 (2023-12-24)
 
@@ -15,7 +29,7 @@
 * Nach dem Klick auf den Button signalisiert zusätzlich ein Icon über den Vorgang: Grüner Haken (erfolgreich), rotes Kreuz (fehlgeschlagen).
 * Sonstiges:
   * JS: 
-    * Da das Kopieren von Text in die Zwischenablage mittels `document.execCommand('copy')` zugunsten der Clipboard API missbilligt ist und seit Jahren als DEPREACTED eingestuft ist, wird jetzt vorrangig die Clipboard API verwendet. Sollte diese nicht vorhanden sein, z.B. in einem Kontext wo SSL fehlt, wird als Fallback die alte Methode verwendet, solange diese noch funktioniert.
+    * Da das Kopieren von Text in die Zwischenablage mittels `document.execCommand('copy')` zugunsten der Clipboard API missbilligt ist und seit Jahren als DEPRECATED eingestuft ist, wird jetzt vorrangig die Clipboard API verwendet. Sollte diese nicht vorhanden sein, z.B. in einem Kontext wo SSL fehlt, wird als Fallback die alte Methode verwendet, solange diese noch funktioniert.
     * Code verbessert.
 
 ### 1.2.0
