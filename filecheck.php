@@ -39,9 +39,10 @@ $checksum_file_flags	= [];
 $config					= [];
 $empty_file_hash		= 'd41d8cd98f00b204e9800998ecf8427e';
 
-$ver					= '1.4.0-b1';
+$ver					= '1.4.0-b2';
 $title					= "phpBB File Check v{$ver}";
 $output					= html_start();
+$notices				= '';
 $start_time				= microtime(true);
 
 $service = [
@@ -73,6 +74,10 @@ if (file_exists(ROOT_PATH . 'filecheck_config.php'))
 {
 	include ROOT_PATH . 'filecheck_config.php';
 }
+else
+{
+	notice('config file [filecheck_config.php] does not exist');
+}
 $config['debug_mode']		= $config['debug_mode']			?? 0;
 $config['zip_url_pattern']	= $config['zip_url_pattern']	?? '';
 $config['zip_name_pattern']	= $config['zip_name_pattern']	?? '';
@@ -87,7 +92,7 @@ if (file_exists(ROOT_PATH . $constants_file))
 	$constants_content = @file_get_contents(ROOT_PATH . $constants_file);
 	if ($constants_content !== false)
 	{
-		preg_match('/\'PHPBB_VERSION\'\s*,\s*\'([0-9]+\.[0-9]+\.[0-9]+)\'/', $constants_content, $matches);
+		preg_match('/\'PHPBB_VERSION\'\s*,\s*\'([0-9]+\.[0-9]+\.[0-9]+)(.*?)\'/', $constants_content, $matches);
 		$PHPBB_VERSION = $matches[1] ?? null;
 		if ($PHPBB_VERSION !== null && !file_exists(ROOT_PATH . $checksum_file))
 		{
@@ -97,7 +102,11 @@ if (file_exists(ROOT_PATH . $constants_file))
 		}
 		if ($PHPBB_VERSION === null)
 		{
-			$constants_notice = "Notice: phpBB version could not be determined from [{$constants_file}]" . EOL;
+			notice("phpBB version could not be determined from [{$constants_file}]");
+		}
+		else if (($matches[2] ?? '') != '')
+		{
+			terminate("pre-releases of phpBB are not supported: {$matches[1]}{$matches[2]}");
 		}
 		else
 		{
@@ -106,12 +115,12 @@ if (file_exists(ROOT_PATH . $constants_file))
 	}
 	else
 	{
-		$constants_notice = "Notice: phpBB file [{$constants_file}] could not be read" . EOL;
+		notice("phpBB file [{$constants_file}] could not be read");
 	}
 }
 else
 {
-	$constants_notice = "Notice: phpBB file [{$constants_file}] not found" . EOL;
+	notice("phpBB file [{$constants_file}] not found");
 }
 $checksum_source = isset($PHPBB_VERSION) && !file_exists(ROOT_PATH . $checksum_file) ? 'ZIP' : 'Folder';
 
@@ -122,8 +131,6 @@ if ($checksum_source == 'ZIP')
 {
 	$zip_url	= str_replace(['{major}', '{minor}', '{patchlevel}'], $PHPBB_VERSION_SEGMENTS, $config['zip_url_pattern']);
 	$zip_name	= str_replace(['{major}', '{minor}', '{patchlevel}'], $PHPBB_VERSION_SEGMENTS, $config['zip_name_pattern']);
-	// var_dump($zip_url);
-	// var_dump($zip_name);
 
 	if (!file_exists(ROOT_PATH . $zip_name) && $service['ZipArchive'] && $service['allow_url_fopen'] && $config['zip_url_pattern'] != '')
 	{
@@ -148,36 +155,34 @@ if ($checksum_source == 'ZIP')
 		}
 	}
 
-	$zip_notice = '';
-	$zip_notice .= $config['zip_url_pattern'] == ''		? 'Notice: zip_url_pattern not set' . EOL : '';
-	$zip_notice .= $config['zip_name_pattern'] == ''	? 'Notice: zip_name_pattern not set' . EOL : '';
-	$zip_notice .= !$service['ZipArchive']				? 'Notice: ZipArchive class not available' . EOL : '';
-	$zip_notice .= !$service['allow_url_fopen']			? 'Notice: allow_url_fopen not enabled' . EOL : '';
+	notice('zip_url_pattern not set',			$config['zip_url_pattern'] == '');
+	notice('zip_name_pattern not set',			$config['zip_name_pattern'] == '');
+	notice('ZipArchive class not available',	!$service['ZipArchive']);
+	notice('allow_url_fopen not enabled',		!$service['allow_url_fopen']);
 }
 
 /*
 * Load the checksum files into the hash list
 */
-$checksums_name			= '';
-$checksums_ver			= '';
-$checksums_diff_name	= '';
-$checksums_diff_ver		= '';
-$hash_list				= [];
+$checksum_name		= '';
+$checksum_ver		= '';
+$checksum_diff_name	= '';
+$checksum_diff_ver	= '';
+$hash_list			= [];
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_file)
 	|| $checksum_source == 'ZIP' && zip_file_exists($checksum_file)
 )
 {
-	load_checksum_file(ROOT_PATH . $checksum_file, $checksums_name, $checksums_ver, $checksum_source, 1, $hash_list);
+	load_checksum_file($checksum_file, $checksum_name, $checksum_ver, $checksum_source, 1, $hash_list);
 
-	if (isset($PHPBB_VERSION) && $checksums_ver != $PHPBB_VERSION)
+	if (isset($PHPBB_VERSION) && $checksum_ver != $PHPBB_VERSION)
 	{
-		terminate("checksum file [{$checksum_file}] has the wrong version $checksums_ver");
+		terminate("checksum file [{$checksum_file}] has the wrong version $checksum_ver");
 	}
 	$checksum_file_flags[] = '1';
 }
 else
 {
-	$output .= ($constants_notice ?? '') . ($zip_notice ?? '');
 	terminate("checksum file [{$checksum_file}] not found");
 }
 
@@ -185,11 +190,11 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_diff_file)
 	|| $checksum_source == 'ZIP' && zip_file_exists($checksum_diff_file)
 )
 {
-	load_checksum_file(ROOT_PATH . $checksum_diff_file, $checksums_diff_name, $checksums_diff_ver, $checksum_source, 2, $hash_list);
+	load_checksum_file($checksum_diff_file, $checksum_diff_name, $checksum_diff_ver, $checksum_source, 2, $hash_list);
 
-	if (isset($PHPBB_VERSION) && $checksums_diff_ver != $PHPBB_VERSION)
+	if (isset($PHPBB_VERSION) && $checksum_diff_ver != $PHPBB_VERSION)
 	{
-		terminate("checksum file [{$checksum_diff_file}] has the wrong version $checksums_diff_ver");
+		terminate("checksum file [{$checksum_diff_file}] has the wrong version $checksum_diff_ver");
 	}
 	$checksum_file_flags[] = '2';
 }
@@ -294,8 +299,8 @@ if (isset($zip))
 $output .= sprintf('Version mode : %1$s', $checksum_version_mode) . EOL;
 $output .= sprintf('MD5 source   : %1$s (%2$s)', $checksum_source, implode(', ', $checksum_file_flags)) . EOL;
 $output .= sprintf('phpBB Version: %1$s', $PHPBB_VERSION ?? 'unknown') . EOL;
-$output .= sprintf('MD5 Version 1: %1$s (%2$s)', $checksums_ver, $checksums_name) . EOL;
-$output .= sprintf('MD5 Version 2: ' . ($checksums_diff_ver ? '%1$s (%2$s)' : '-'), $checksums_diff_ver, $checksums_diff_name) . EOL;
+$output .= sprintf('MD5 Version 1: %1$s (%2$s)', $checksum_ver, $checksum_name) . EOL;
+$output .= sprintf('MD5 Version 2: ' . ($checksum_diff_ver ? '%1$s (%2$s)' : '-'), $checksum_diff_ver, $checksum_diff_name) . EOL;
 $output .= sprintf('PHP Version  : %1$s (%2$s)', PHP_VERSION, PHP_OS) . EOL;
 $output .= EOL;
 $output .= 'Please wait, ' . $count_checksums . ' checksums are being processed...' . EOL;
@@ -382,7 +387,7 @@ foreach ($hash_list as $file => $hash_data)
 		{
 			if (($hash_data[1]['hash'] ?? '') == $calc_hash)
 			{
-				$result_list[] = $result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksums_diff_name . ' hash', $count_notice);
+				$result_list[] = $result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksum_diff_name . ' hash', $count_notice);
 			}
 			else if ($calc_hash == $empty_file_hash)
 			{
@@ -512,11 +517,23 @@ function flush_buffer(): void
 	$output = '';
 }
 
+function notice(string $message, bool $condition = true): void
+{
+	if ($condition)
+	{
+		global $notices;
+
+		$notices .= 'FC_NOTICE: ' . $message . EOL;
+	}
+}
+
 function terminate(string $message): void
 {
 	global $output;
+	global $notices;
 
-	$output .= "File Check error: " . $message . EOL;
+	$output .= $notices;
+	$output .= 'FC_ERROR: ' . $message . EOL;
 	$output .= html_end();
 	flush_buffer();
 	exit;
@@ -644,34 +661,32 @@ _HTML_;
 	return $output;
 }
 
-function load_checksum_file(string $checksum_file, string &$checksums_name, string &$checksums_ver, string $checksum_source, int $hash_file_id, array &$hash_list): void
+function load_checksum_file(string $checksum_file, string &$checksum_name, string &$checksum_ver, string $checksum_source, int $hash_file_id, array &$hash_list): void
 {
-	$checksum_basename = basename($checksum_file);
-
 	if ($checksum_source == 'Folder')
 	{
-		$checksums = @file($checksum_file, FILE_IGNORE_NEW_LINES);
+		$checksums = @file(ROOT_PATH . $checksum_file, FILE_IGNORE_NEW_LINES);
 	}
 	else
 	{
-		$checksums = zip_extract_to_array($checksum_basename) ?? false;
+		$checksums = zip_extract_to_array($checksum_file) ?? false;
 	}
 
 	if ($checksums === false)
 	{
-		terminate("checksum file [{$checksum_basename}] could not be read");
+		terminate("checksum file [{$checksum_file}] could not be read");
 	}
 
 	preg_match('/^(.*?):([0-9]+\.[0-9]+\.[0-9]+)/', end($checksums), $matches);
 	if (is_array($matches) && count($matches) == 3)
 	{
 		array_pop($checksums);
-		$checksums_name		= $matches[1];
-		$checksums_ver		= $matches[2];
+		$checksum_name	= $matches[1];
+		$checksum_ver	= $matches[2];
 	}
 	else
 	{
-		terminate("checksum file [{$checksum_basename}] does not have a valid version");
+		terminate("checksum file [{$checksum_file}] does not have a valid version");
 	}
 
 	$line_num		= 0;
@@ -707,7 +722,7 @@ function load_checksum_file(string $checksum_file, string &$checksums_name, stri
 	if ($error_messages != '')
 	{
 		add_list_lines($error_messages);
-		terminate("checksum file [{$checksum_basename}] has the following issues:" . EOL . $error_messages);
+		terminate("checksum file [{$checksum_file}] has the following issues:" . EOL . $error_messages);
 	}
 }
 
