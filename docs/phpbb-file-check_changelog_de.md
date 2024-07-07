@@ -1,18 +1,18 @@
 ### 1.4.0
-(2024--)
+(2024-07-07)
 
-* Es gibt jetzt einen automatischen Download des passenden Prüfsummen-Pakets (ZIP), wodurch es nicht mehr nötig ist dieses manuell herunterzuladen, dann zu entpacken und die Prüfsummen-Dateien manuell hochzuladen. Das ZIP wird dabei lediglich vom Server geholt und lokal (im Foren-Root) gespeichert, jedoch nicht entpackt, da FC auf die Dateien im ZIP direkt zugreifen kann. Ist diese automatische Handhabung des Prüfsummen-Pakets nicht möglich, z.B. weil der Hoster den Zugriff auf externe Dateien oder aber die ZIP Klasse deaktiviert hat, dann können die Prüfsummen-Dateien weiterhin manuell hochgeladen werden.
-  * Um das pro nationaler Support-Seite individuell steuern zu können, gibt es jetzt die neue Datei `filecheck_config.php` in der die entsprechenden Muster für die URL und den ZIP-Namen definiert werden können. Fehlt diese Datei oder die darin enthaltenen Variablen, ist eine automatische Handhabung des Prüfsummen-Pakets nicht möglich und FC schaltet in den manuellen Modus.
+* Es gibt jetzt einen automatischen Download des passenden Prüfsummen-Pakets (ZIP); dadurch ist es nicht mehr nötig, dieses manuell herunterzuladen, zu entpacken und die Prüfsummen-Dateien einzeln hochzuladen. Das ZIP wird im Foren-Root gespeichert, damit FC darauf zugreifen kann. Ist diese automatische Handhabung des Prüfsummen-Pakets nicht möglich, z.B. weil der Hoster den Zugriff auf externe Dateien oder aber die ZIP Klasse deaktiviert hat, dann können die Prüfsummen-Dateien wie bisher manuell hochgeladen werden.
+  * Um das pro nationaler Support-Seite individuell steuern zu können, gibt es jetzt die neue Datei `filecheck_config.php` in der die entsprechenden Muster für die URL und den ZIP-Namen vom jeweiligen nationalen Support Team definiert werden können. Fehlt diese Datei oder die darin enthaltenen Variablen, ist eine automatische Handhabung des Prüfsummen-Pakets nicht möglich und FC schaltet in den manuellen Modus.
   * Als Fallback haben manuell hochgeladene Prüfsummen-Dateien stets Vorrang.
-  * In der Einleitung wird zusätzlich angezeigt, aus welcher Quelle (Ordner oder ZIP) die Prüfsummen-Dateien geladen wurden. Dahinter wird in Klammern angezeigt, welche Dateien effektiv aus der Quelle geladen wurden:
+  * In der Einleitung wird zusätzlich angezeigt, aus welcher Quelle (Ordner oder ZIP) die Prüfsummen-Dateien geladen wurden. Dahinter wird in Klammern angezeigt, welche Dateien effektiv aus der Quelle geladen werden konnten:
     * 1 = primäre Prüfsummen-Datei
     * 2 = sekundäre Prüfsummen-Datei
     * I = Ignorieren-Liste
     * E = Ausnahme-Liste
-* Der Debug-Modus muss nicht mehr direkt im FC Skript aktiviert werden, sondern kann in der neuen Konfig Datei geschaltet werden.
-* Passt die Version einer Prüfsummen-Datei nicht zur ermittelten phpBB Version, wird die Ausführung jetzt direkt mit einer Fehlermeldung abgebrochen. So wird verhindert, dass das Tool unnötigerweise mit einer falschen Prüfsummen-Datei ausgeführt wird, wodurch zahlreiche Falschmeldungen verursacht würden. Das konnte dann auftreten, wenn bei einer falschen Prüfsummen-Datei die Version im Dateinamen auf die tatsächlich benötigte phpBB Version geändert wurde.
-* Fehlt die FC Konfig Datei `filecheck_config.php`, wird das jetzt als Hinweis gemeldet, sofern ein Abbruch getriggert wird. [Vorschlag von Mike-on-Tour]
-* Bei einer Vorab-Version von phpBB (zum Beispiel 3.3.12-RC1) hatte FC einen Hinweis ausgegeben, dass die Version nicht ermittelt werden konnte. Ursache waren zu strenge Regeln bei der Prüfung der Versionsnummer, durch die lediglich Release-Versionen akzeptiert wurden. Jetzt kann FC auch mit Vorab-Versionen umgehen und direkt eine entsprechende Fehlermeldung ausgeben. [Gemeldet von Scanialady]
+* Passt die Version einer Prüfsummen-Datei nicht zur ermittelten phpBB Version, wird die Ausführung jetzt direkt mit einer Fehlermeldung abgebrochen. So wird verhindert, dass das Tool unnötigerweise mit einer falschen Prüfsummen-Datei ausgeführt werden kann, wodurch zahlreiche Falschmeldungen verursacht würden. Das konnte dann auftreten, wenn bei einer falschen Prüfsummen-Datei die Version im Dateinamen auf die tatsächlich benötigte phpBB Version geändert wurde.
+* Bei einer Vorab-Version von phpBB (zum Beispiel 3.3.12-RC1) hatte FC einen Hinweis ausgegeben, dass die Version nicht ermittelt werden konnte. Ursache waren zu strenge Regeln bei der Prüfung der Versionsnummer, durch die lediglich Release-Versionen berücksichtigt wurden. Jetzt kann FC auch mit Vorab-Versionen umgehen und eine passende Fehlermeldung ausgeben. [Gemeldet von Scanialady (phpBB.de)]
+* Um den Debug-Modus bei Bedarf zu aktivieren, muss nicht mehr das FC Skript selber geändert werden, sondern kann in der neuen Konfig Datei geregelt werden.
+* Die Prüfung der PHP Voraussetzungen (Min/Max Version) war in dieser Form sinnfrei und wurde entfernt.
 
 ### 1.3.0
 (2024-05-29)
@@ -96,7 +96,7 @@
 
 * Fix: Bei Verwendung in der Shell wurde bei einer Fehlermeldung bezüglich fehlender Prüfsummen-Datei der HTML Footer generiert.
 * Um die Problematik der Abweichungen bei phpBB.de und phpBB.com Paketen in den Griff zu bekommen, mussten einige Änderungen vorgenommen werden. Die Basis für FC ist nicht mehr das deutsche Komplettpaket, sondern das phpBB.com Paket. Um alle zusätzlichen und abweichenden Dateien des deutschen Komplettpakets berücksichtigen zu können, wird nun eine zweite Prüfsummen-Datei unterstützt, in der alle Abweichungen gegenüber dem phpBB.com Paket enthalten sind. FC kombiniert dann während der Ausführung beide Prüfsummen-Dateien. Somit können nun auch die abweichenden Dateien aussagekräftig geprüft werden, die bisher je nach Installationspaket möglicherweise falsch als `* CHANGED` gemeldet wurden.
-* Die Datei `config.php` wird nicht mehr ignoriert, sondern auf Existenz geprüft. Ausserdem wird geprüft, ob diese Datei 0 Bytes hat (In diesem Fall wird eine Warnung erzeugt). [Vorschlag von Scanialady]
+* Die Datei `config.php` wird nicht mehr ignoriert, sondern auf Existenz geprüft. Ausserdem wird geprüft, ob diese Datei 0 Bytes hat (In diesem Fall wird eine Warnung erzeugt). [Vorschlag von Scanialady (phpBB.de)]
 * In der Versionsübersicht ist die MD5 Version jetzt nach phpBB.de und phpBB.com unterteilt.
 * Neue Meldungs-Typen:
   * `  NOTICE`
@@ -164,7 +164,7 @@
 ### 0.2.1
 (2023-07-03)
 
-* Fix: Bei PHP <8.0 wurde "Uncaught Error: Call to undefined function str_starts_with()" erzeugt. [Meldung von Scanialady]
+* Fix: Bei PHP <8.0 wurde "Uncaught Error: Call to undefined function str_starts_with()" erzeugt. [Meldung von Scanialady (phpBB.de)]
 
 ### 0.2.0
 (2023-07-03)

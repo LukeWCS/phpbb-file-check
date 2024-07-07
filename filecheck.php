@@ -6,18 +6,12 @@
 * @copyright (c) 2023 LukeWCS <phpBB.de>
 * @license GNU General Public License, version 2 (GPL-2.0-only)
 *
+* PHP requirements: 7.1.0 - 8.3.x
+*
 */
 
 # phpcs:disable PSR1.Files.SideEffects
-
-/*
-* Check requirements
-*/
-if (!(version_compare(PHP_VERSION, '7.1.0', '>=') && version_compare(PHP_VERSION, '8.4.0-dev', '<')))
-{
-	echo 'File Check error: invalid PHP Version ' . PHP_VERSION;
-	exit;
-}
+# phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames notices
 
 /*
 * Initialization
@@ -33,13 +27,14 @@ $checksum_file			= $checksum_file_name . $checksum_file_suffix;
 $checksum_diff_file		= $checksum_file_name . '_diff' . $checksum_file_suffix;
 $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
+$config_file			= 'filecheck_config.php';
 $constants_file			= 'includes/constants.php';
 $checksum_version_mode	= 'Manually';
 $checksum_file_flags	= [];
 $config					= [];
 $empty_file_hash		= 'd41d8cd98f00b204e9800998ecf8427e';
 
-$ver					= '1.4.0-b2';
+$ver					= '1.4.0';
 $title					= "phpBB File Check v{$ver}";
 $output					= html_start();
 $notices				= '';
@@ -70,13 +65,13 @@ $output .= str_repeat('=', strlen($title)) . EOL;
 /*
 * Include config
 */
-if (file_exists(ROOT_PATH . 'filecheck_config.php'))
+if (file_exists(ROOT_PATH . $config_file))
 {
-	include ROOT_PATH . 'filecheck_config.php';
+	include ROOT_PATH . $config_file;
 }
 else
 {
-	notice('config file [filecheck_config.php] does not exist');
+	notice("Config file [{$config_file}] does not exist.");
 }
 $config['debug_mode']		= $config['debug_mode']			?? 0;
 $config['zip_url_pattern']	= $config['zip_url_pattern']	?? '';
@@ -102,11 +97,11 @@ if (file_exists(ROOT_PATH . $constants_file))
 		}
 		if ($PHPBB_VERSION === null)
 		{
-			notice("phpBB version could not be determined from [{$constants_file}]");
+			notice("phpBB version could not be determined from [{$constants_file}].");
 		}
 		else if (($matches[2] ?? '') != '')
 		{
-			terminate("pre-releases of phpBB are not supported: {$matches[1]}{$matches[2]}");
+			terminate("Pre-releases of phpBB are not supported, {$matches[1]}{$matches[2]} found.");
 		}
 		else
 		{
@@ -115,12 +110,12 @@ if (file_exists(ROOT_PATH . $constants_file))
 	}
 	else
 	{
-		notice("phpBB file [{$constants_file}] could not be read");
+		notice("phpBB file [{$constants_file}] could not be read.");
 	}
 }
 else
 {
-	notice("phpBB file [{$constants_file}] not found");
+	notice("phpBB file [{$constants_file}] not found.");
 }
 $checksum_source = isset($PHPBB_VERSION) && !file_exists(ROOT_PATH . $checksum_file) ? 'ZIP' : 'Folder';
 
@@ -138,11 +133,11 @@ if ($checksum_source == 'ZIP')
 
 		if ($ZIP_content === false)
 		{
-			terminate("[{$zip_name}] could not be downloaded");
+			terminate("Checksum archive [{$zip_name}] could not be downloaded.");
 		}
 		if (file_put_contents(ROOT_PATH . $zip_name, $ZIP_content) === false)
 		{
-			terminate("[{$zip_name}] could not be saved");
+			terminate("Checksum archive [{$zip_name}] could not be saved.");
 		}
 	}
 
@@ -151,7 +146,7 @@ if ($checksum_source == 'ZIP')
 		$zip = new ZipArchive;
 		if ($zip->open(ROOT_PATH . $zip_name) !== true)
 		{
-			terminate("[{$zip_name}] could not be opened");
+			terminate("Checksum archive [{$zip_name}] could not be opened.");
 		}
 	}
 
@@ -177,13 +172,13 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_file)
 
 	if (isset($PHPBB_VERSION) && $checksum_ver != $PHPBB_VERSION)
 	{
-		terminate("checksum file [{$checksum_file}] has the wrong version $checksum_ver");
+		terminate("Checksum file [{$checksum_file}] has the wrong version {$checksum_ver}.");
 	}
 	$checksum_file_flags[] = '1';
 }
 else
 {
-	terminate("checksum file [{$checksum_file}] not found");
+	terminate("Checksum file [{$checksum_file}] not found.");
 }
 
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_diff_file)
@@ -194,7 +189,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_diff_file)
 
 	if (isset($PHPBB_VERSION) && $checksum_diff_ver != $PHPBB_VERSION)
 	{
-		terminate("checksum file [{$checksum_diff_file}] has the wrong version $checksum_diff_ver");
+		terminate("Checksum file [{$checksum_diff_file}] has the wrong version {$checksum_diff_ver}.");
 	}
 	$checksum_file_flags[] = '2';
 }
@@ -233,13 +228,13 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
 		if ($error_messages != '')
 		{
 			add_list_lines($error_messages);
-			terminate("ignore list [{$ignore_file}] has the following issues:" . EOL . $error_messages);
+			terminate("Ignore list [{$ignore_file}] has the following issues:" . EOL . $error_messages);
 		}
 		$ignore_list = array_merge($ignore_list, $import_list);
 	}
 	else
 	{
-		terminate("ignore list [{$ignore_file}] could not be read");
+		terminate("Ignore list [{$ignore_file}] could not be read.");
 	}
 	$checksum_file_flags[] = 'I';
 }
@@ -276,14 +271,14 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $exceptions_file)
 		if ($error_messages != '')
 		{
 			add_list_lines($error_messages);
-			terminate("exception list [{$exceptions_file}] has the following issues:" . EOL . $error_messages);
+			terminate("Exception list [{$exceptions_file}] has the following issues:" . EOL . $error_messages);
 		}
 		$exception_list = array_merge($exception_list, $import_list);
 		sort($exception_list);
 	}
 	else
 	{
-		terminate("exception list [{$exceptions_file}] could not be read");
+		terminate("Exception list [{$exceptions_file}] could not be read.");
 	}
 	$checksum_file_flags[] = 'E';
 }
@@ -674,7 +669,7 @@ function load_checksum_file(string $checksum_file, string &$checksum_name, strin
 
 	if ($checksums === false)
 	{
-		terminate("checksum file [{$checksum_file}] could not be read");
+		terminate("Checksum file [{$checksum_file}] could not be read.");
 	}
 
 	preg_match('/^(.*?):([0-9]+\.[0-9]+\.[0-9]+)/', end($checksums), $matches);
@@ -686,7 +681,7 @@ function load_checksum_file(string $checksum_file, string &$checksum_name, strin
 	}
 	else
 	{
-		terminate("checksum file [{$checksum_file}] does not have a valid version");
+		terminate("Checksum file [{$checksum_file}] does not have a valid version.");
 	}
 
 	$line_num		= 0;
@@ -722,7 +717,7 @@ function load_checksum_file(string $checksum_file, string &$checksum_name, strin
 	if ($error_messages != '')
 	{
 		add_list_lines($error_messages);
-		terminate("checksum file [{$checksum_file}] has the following issues:" . EOL . $error_messages);
+		terminate("Checksum file [{$checksum_file}] has the following issues:" . EOL . $error_messages);
 	}
 }
 
@@ -761,3 +756,5 @@ function zip_extract_to_array(string $file_name): ?array
 	}
 	return $file_content_list !== false ? $file_content_list : null;
 }
+
+# phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames
