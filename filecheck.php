@@ -34,7 +34,7 @@ $checksum_file_flags	= [];
 $config					= [];
 $empty_file_hash		= 'd41d8cd98f00b204e9800998ecf8427e';
 
-$ver					= '1.4.1-b1';
+$ver					= '1.4.1-b2';
 $title					= "phpBB File Check v{$ver}";
 $output					= html_start();
 $notices				= '';
@@ -138,11 +138,12 @@ if ($checksum_source == 'ZIP')
 // $service['Socket']			= 0;
 // $service['allow_url_fopen']	= 1;
 
-	notice('zip_url_pattern not set',			$config['zip_url_pattern'] == '');
-	notice('zip_name_pattern not set',			$config['zip_name_pattern'] == '');
-	notice('ZipArchive class not available',	!$service['ZipArchive']);
-	notice('cURL extension not available',		!$service['cURL']);
-	notice('allow_url_fopen not enabled',		!$service['allow_url_fopen']);
+	notice('zip_url_pattern not set',		$config['zip_url_pattern'] == '');
+	notice('zip_name_pattern not set',		$config['zip_name_pattern'] == '');
+	notice('ZipArchive not available',		!$service['ZipArchive']);
+	notice('cURL extension not available',	!$service['cURL']);
+	notice('Socket not available',			!$service['Socket']);
+	notice('allow_url_fopen not enabled',	!$service['allow_url_fopen']);
 
 	$zip_url	= str_replace(['{major}', '{minor}', '{patchlevel}'], $PHPBB_VERSION_SEGMENTS, $config['zip_url_pattern']);
 	$zip_name	= str_replace(['{major}', '{minor}', '{patchlevel}'], $PHPBB_VERSION_SEGMENTS, $config['zip_name_pattern']);

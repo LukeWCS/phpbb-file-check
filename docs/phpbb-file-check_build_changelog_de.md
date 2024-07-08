@@ -1,3 +1,6 @@
+### 1.4.1-b2
+* Fix: Bei einem Abbruch wurde kein Hinweis für den deaktivierten Socket Dienst generiert. Ich habe vergessen das einzubauen.
+
 ### 1.4.1-b1
 * Für den Download des Hash Pakets wird jetzt zusätzlich cURL und Socket verwendet. Ist beides nicht möglich, wird die bisherge Funktion `file_get_contents()` verwendet.
 * Beim Download des Hash Pakets werden die Hinweise jetzt zuerst generiert, damit diese bei einer Fehlermeldung ebenfalls zur Verfügung stehen.
