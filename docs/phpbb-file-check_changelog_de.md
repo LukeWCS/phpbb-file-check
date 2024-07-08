@@ -1,3 +1,10 @@
+### 1.4.1
+(2024-07-)
+
+* Der Download des Prüfsummen-Pakets mittels `file_get_contents()` ist auf die PHP Einstellung `allow_url_fopen` angewiesen, welches bei vielen Hostern jedoch deaktiviert ist. Deswegen wird jetzt als Alternative und mit Priorität cURL verwendet und als zusätzliche Alternative wird Socket verwendet. Als letzte Möglichkeit wird die bisherige Methode verwendet, die auf fopen basiert. Nur wenn keine der 3 Methoden verfügbar ist, bricht FC den Vorgang ab und gibt eine Fehlermeldung mit Details (Hinweisen) aus.
+* Beim Download des Prüfsummen-Pakets werden die Hinweise bezüglich Konfig und Dienste sofort generiert, damit diese bei einer Fehlermeldung ebenfalls zur Verfügung stehen.
+* Die Dienste und ihre Zustände werden jetzt explizit im Bericht bei den PHP Informationen gelistet.
+
 ### 1.4.0
 (2024-07-07)
 

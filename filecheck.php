@@ -34,16 +34,11 @@ $checksum_file_flags	= [];
 $config					= [];
 $empty_file_hash		= 'd41d8cd98f00b204e9800998ecf8427e';
 
-$ver					= '1.4.0';
+$ver					= '1.4.1-b1';
 $title					= "phpBB File Check v{$ver}";
 $output					= html_start();
 $notices				= '';
 $start_time				= microtime(true);
-
-$service = [
-	'ZipArchive'		=> class_exists('ZipArchive'),
-	'allow_url_fopen'	=> ini_get('allow_url_fopen'),
-];
 
 $ignore_list = [
 	'^\.git',
@@ -55,6 +50,20 @@ $exception_list = [
 	'ext/phpbb/viglink/',
 	'install/',
 ];
+
+/*
+* Check services
+*/
+$service = [
+	'ZipArchive'		=> class_exists('ZipArchive'),
+	'cURL'				=> extension_loaded('curl'),
+	'Socket'			=> function_exists('fsockopen'),
+	'allow_url_fopen'	=> (bool) ini_get('allow_url_fopen'),
+];
+
+$service_list = array_map(function (string $key, int $value) {
+	return "$key:$value";
+}, array_keys($service), array_values($service));
 
 /*
 * Generate title
@@ -120,28 +129,77 @@ else
 $checksum_source = isset($PHPBB_VERSION) && !file_exists(ROOT_PATH . $checksum_file) ? 'ZIP' : 'Folder';
 
 /*
-* Automatic download of the appropriate checksum package
+* Automatic download and opening of the appropriate checksum package
 */
 if ($checksum_source == 'ZIP')
 {
+// $service['ZipArchive']		= 1;
+// $service['cURL']			= 0;
+// $service['Socket']			= 0;
+// $service['allow_url_fopen']	= 1;
+
+	notice('zip_url_pattern not set',			$config['zip_url_pattern'] == '');
+	notice('zip_name_pattern not set',			$config['zip_name_pattern'] == '');
+	notice('ZipArchive class not available',	!$service['ZipArchive']);
+	notice('cURL extension not available',		!$service['cURL']);
+	notice('allow_url_fopen not enabled',		!$service['allow_url_fopen']);
+
 	$zip_url	= str_replace(['{major}', '{minor}', '{patchlevel}'], $PHPBB_VERSION_SEGMENTS, $config['zip_url_pattern']);
 	$zip_name	= str_replace(['{major}', '{minor}', '{patchlevel}'], $PHPBB_VERSION_SEGMENTS, $config['zip_name_pattern']);
 
-	if (!file_exists(ROOT_PATH . $zip_name) && $service['ZipArchive'] && $service['allow_url_fopen'] && $config['zip_url_pattern'] != '')
+	if ($config['zip_url_pattern'] != '' && !file_exists(ROOT_PATH . $zip_name)	&& $service['ZipArchive'])
 	{
-		$ZIP_content = @file_get_contents($zip_url . $zip_name);
+		if ($service['cURL'])
+		{
+			$curl_status = [];
+			$ZIP_content = curl_get_contents($zip_url . $zip_name, $curl_status) ?? false;
+			notice('cURL: HTTP code ' . ($curl_status['http_code'] ?? 0));
+			// var_dump($curl_status);
+			// var_dump($ZIP_content);
+		}
+		else if ($service['Socket'])
+		{
+			preg_match('/(http[s]?):\/\/(.*?)(\/.*)\//', $zip_url, $url_parts);
+// var_dump($url_parts);
+			if (count($url_parts) == 4)
+			{
+				$socket_status = [];
+				$socket_host = $url_parts[2];
+				$socket_dir = $url_parts[3];
+				$socket_port = $url_parts[1] == 'https' ? 443 : 80;
+				$ZIP_content = socket_get_contents($socket_host, $socket_dir, $zip_name, $socket_port, $socket_status) ?? false;
+				notice('Socket: HTTP code ' . ($socket_status[0] ?? ''));
+				// var_dump($socket_status);
+				// var_dump($ZIP_content);
+			}
+			else
+			{
+				terminate("Socket: The download URL could not be parsed.");
+			}
+		}
+		else if ($service['allow_url_fopen'])
+		{
+			$ZIP_content = @file_get_contents($zip_url . $zip_name);
+			// var_dump($ZIP_content);
+		}
+		else
+		{
+			$ZIP_content = false;
+		}
 
 		if ($ZIP_content === false)
 		{
 			terminate("Checksum archive [{$zip_name}] could not be downloaded.");
 		}
+// exit;
 		if (file_put_contents(ROOT_PATH . $zip_name, $ZIP_content) === false)
 		{
 			terminate("Checksum archive [{$zip_name}] could not be saved.");
 		}
+// exit;
 	}
 
-	if (file_exists(ROOT_PATH . $zip_name) && $service['ZipArchive'] && $config['zip_name_pattern'] != '')
+	if ($config['zip_url_pattern'] != '' && file_exists(ROOT_PATH . $zip_name) && $service['ZipArchive'])
 	{
 		$zip = new ZipArchive;
 		if ($zip->open(ROOT_PATH . $zip_name) !== true)
@@ -149,11 +207,6 @@ if ($checksum_source == 'ZIP')
 			terminate("Checksum archive [{$zip_name}] could not be opened.");
 		}
 	}
-
-	notice('zip_url_pattern not set',			$config['zip_url_pattern'] == '');
-	notice('zip_name_pattern not set',			$config['zip_name_pattern'] == '');
-	notice('ZipArchive class not available',	!$service['ZipArchive']);
-	notice('allow_url_fopen not enabled',		!$service['allow_url_fopen']);
 }
 
 /*
@@ -332,6 +385,7 @@ $result_list		= [];
 $result_struct		= function (string &$file, array &$hash_data, string $msg_type, string $msg, int &$counter): array
 {
 	$counter++;
+
 	return [
 		'file'			=> $file,
 		'path'			=> dirname($file),
@@ -462,6 +516,7 @@ $exec_info =	sprintf('Run time          : %.3f seconds', microtime(true) - $star
 $exec_info .=	sprintf('Max execution time: %u seconds', ini_get('max_execution_time')) . EOL;
 $exec_info .=	sprintf('Memory peak usage : %s bytes', number_format(memory_get_peak_usage())) . EOL;
 $exec_info .=	sprintf('Memory limit      : %s',  ini_get('memory_limit')) . EOL;
+$exec_info .=	sprintf('Services          : %s', implode(', ', $service_list)) . EOL;
 
 $output .= EOL;
 $output .= 'Finished!' . EOL;
@@ -489,6 +544,7 @@ function is_ignored(string &$file, string &$ignore_list_regex): bool
 	{
 		return true;
 	}
+
 	return false;
 }
 
@@ -501,6 +557,7 @@ function is_exception(string &$file, array &$exception_list): bool
 			return true;
 		}
 	}
+
 	return false;
 }
 
@@ -578,6 +635,7 @@ function html_start(): string
 <span class="bbcode">[code]</span>
 
 _HTML_;
+
 	return $output;
 }
 
@@ -653,6 +711,7 @@ _HTML_;
 </html>
 
 _HTML_;
+
 	return $output;
 }
 
@@ -730,6 +789,7 @@ function add_list_lines(string &$list): void
 function column_max_len($list, string $column_name = ''): int
 {
 	$column = is_array($list) ? array_column($list, $column_name) : explode(EOL, $list);
+
 	return max(array_map('strlen', $column));
 }
 
@@ -754,7 +814,56 @@ function zip_extract_to_array(string $file_name): ?array
 	{
 		$file_content_list = preg_split('/\n/', $file_content, -1, PREG_SPLIT_NO_EMPTY);
 	}
+
 	return $file_content_list !== false ? $file_content_list : null;
+}
+
+function curl_get_contents(string $url, array &$status): ?string
+{
+	$curl_h = curl_init();
+	curl_setopt_array($curl_h, [
+		CURLOPT_URL             => $url,
+		CURLOPT_RETURNTRANSFER  => 1,
+		CURLOPT_CONNECTTIMEOUT  => 10,
+		CURLOPT_HEADER          => 0,
+		CURLOPT_SSL_VERIFYHOST  => 0,
+		CURLOPT_SSL_VERIFYPEER  => 0,
+	]);
+	$content = curl_exec($curl_h);
+	$status = curl_getinfo($curl_h) ?: [];
+	curl_close($curl_h);
+
+	return ($status['http_code'] ?? 0) == 200 && $content !== false ? $content : null;
+}
+
+function socket_get_contents(string $host, string $directory, string $file, int $port, array &$status)
+{
+	$socket = fsockopen(($port == 443 ? 'ssl://' : '') . $host, $port, $error_number, $error_string, 10);
+
+	fwrite($socket, "GET $directory/$file HTTP/1.0\r\n");
+	fwrite($socket, "HOST: $host\r\n");
+	fwrite($socket, "Connection: close\r\n\r\n");
+
+	$status = [];
+	$content = '';
+	while (!feof($socket))
+	{
+		$line = trim(fgets($socket));
+		if ($line == '')
+		{
+			break;
+		}
+		$status[] .= $line;
+	}
+	while (!feof($socket))
+	{
+		$content .= fread($socket, 4096);
+	}
+	fclose($socket);
+// var_dump($content);
+// exit;
+
+	return stripos($status[0] ?? '', '200 OK') !== false && $content != '' ? $content : null;
 }
 
 # phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames

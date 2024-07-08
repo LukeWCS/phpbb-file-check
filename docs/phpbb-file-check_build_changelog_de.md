@@ -1,3 +1,8 @@
+### 1.4.1-b1
+* Für den Download des Hash Pakets wird jetzt zusätzlich cURL und Socket verwendet. Ist beides nicht möglich, wird die bisherge Funktion `file_get_contents()` verwendet.
+* Beim Download des Hash Pakets werden die Hinweise jetzt zuerst generiert, damit diese bei einer Fehlermeldung ebenfalls zur Verfügung stehen.
+* Die Dienste und ihre Zustände werden explizit im Bericht bei den PHP Informationen gelistet.
+
 ### 1.4.0
 * Release (2024-07-07)
 * Der Dateiname der Konfig Datei wird nicht mehr als statischer Text, sondern als Variable angesprochen.
