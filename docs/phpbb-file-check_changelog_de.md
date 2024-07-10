@@ -1,9 +1,16 @@
 ### 1.4.1
-(2024-07-)
+(2024-07-10)
 
-* Der Download des Prüfsummen-Pakets mittels `file_get_contents()` ist auf die PHP Einstellung `allow_url_fopen` angewiesen, welches bei vielen Hostern jedoch deaktiviert ist. Deswegen wird jetzt als Alternative und mit Priorität cURL verwendet und als zusätzliche Alternative wird Socket verwendet. Als letzte Möglichkeit wird die bisherige Methode verwendet, die auf fopen basiert. Nur wenn keine der 3 Methoden verfügbar ist, bricht FC den Vorgang ab und gibt eine Fehlermeldung mit Details (Hinweisen) aus.
-* Beim Download des Prüfsummen-Pakets werden die Hinweise bezüglich Konfig und Dienste sofort generiert, damit diese bei einer Fehlermeldung ebenfalls zur Verfügung stehen.
-* Die Dienste und ihre Zustände werden jetzt explizit im Bericht bei den PHP Informationen gelistet.
+* Der Download des Prüfsummen-Pakets mittels `file_get_contents()` ist auf die PHP Einstellung `allow_url_fopen` angewiesen, welches bei vielen Webseiten jedoch deaktiviert ist, wie sich nun herausgestellt hat. Deswegen wird jetzt als neue Alternative cURL verwendet und zusätzlich noch Sockets, mit dem auch phpBB selber arbeitet. Als letzte Möglichkeit wird die bisherige Methode verwendet, die auf fopen basiert. Somit wird die Chance auf einen erfolgreichen Download des ZIPs erheblich verbessert. Die Prioritäten-Folge in der die Methoden - sofern vorhanden - angewendet werden ist also: 
+  * cURL
+  * Sockets
+  * file_get_contents (fopen)
+* Fehlerbehandlung bezüglich Download des Prüfsummen-Pakets weiter ausgebaut und auch zusätzliche Hinweise hinzugefügt:
+  * Wenn cURL nicht verfügbar ist.
+  * Wenn Sockets nicht verfügbar ist.
+  * Wenn das Prüfsummen-Paket im phpBB Root nicht gefunden wurde.
+  * Wenn die übertragenen Daten keinen korrekten ZIP Header enthalten.
+* Die Dienste und ihre Zustände bezüglich Handhabung des Prüfsummen-Pakets werden jetzt explizit im Bericht am Ende bei den Skript/PHP Informationen gelistet.
 
 ### 1.4.0
 (2024-07-07)

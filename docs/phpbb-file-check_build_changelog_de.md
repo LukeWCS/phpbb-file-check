@@ -1,9 +1,16 @@
-### 1.4.1-b2
-* Fix: Bei einem Abbruch wurde kein Hinweis für den deaktivierten Socket Dienst generiert. Ich habe vergessen das einzubauen.
+### 1.4.1
+* Release (2024-07-10)
+* Vor dem Speichern des ZIPs wird zuerst geprüft, ob die übertragenen Daten überhaupt ein ZIP enthalten. Wenn nicht, wird das entsprechend als Hinweis gemeldet.
+* Konnte das ZIP nicht im Root gefunden werden, wird das jetzt explizit als Hinweis gemeldet. [Rückmeldung von Kirk (phpBB.de)]
+* Probleme bezüglich ZIP werden nicht mehr als `FC_ERROR` getriggert, sondern nur noch als `FC_NOTICE`, da diese Probleme streng genommen für FC noch keinen Grund für einen Abbruch darstellen. Dazu musste der Code an mehreren Stellen geändert werden.
+* Code Optimierung.
 
-### 1.4.1-b1
-* Für den Download des Hash Pakets wird jetzt zusätzlich cURL und Socket verwendet. Ist beides nicht möglich, wird die bisherge Funktion `file_get_contents()` verwendet.
-* Beim Download des Hash Pakets werden die Hinweise jetzt zuerst generiert, damit diese bei einer Fehlermeldung ebenfalls zur Verfügung stehen.
+#### 1.4.1-b2
+* Fix: Bei einem Abbruch wurde kein Hinweis für den deaktivierten Socket Dienst generiert. Ich habe vergessen das einzubauen. [Rückmeldung von Kirk (phpBB.de)]
+
+#### 1.4.1-b1
+* Für den Download des Prüfsummen-Pakets wird jetzt zusätzlich cURL und Socket verwendet. Ist beides nicht möglich, wird die bisherige Funktion `file_get_contents()` verwendet.
+* Beim Download des Prüfsummen-Pakets werden die Hinweise der Konfig und Dienste jetzt zuerst generiert, damit diese auch bei einer DL Fehlermeldung ebenfalls zur Verfügung stehen.
 * Die Dienste und ihre Zustände werden explizit im Bericht bei den PHP Informationen gelistet.
 
 ### 1.4.0
