@@ -1,3 +1,14 @@
+### 1.4.2
+(2024-07-21)
+
+* Fix: War das Prüfsummen-Paket zwar vorhanden, aber konnte nicht erfolgreich geöffnet werden, z.B. aufgrund eines Defekts, führte das zu einem FATAL.
+* Fehlerbehandlung bezüglich Prüfsummen-Paket weiter verbessert:
+  * Vor dem Download des Prüfsummen-Pakets wird zuerst geprüft, ob FC das Recht hat, eine Datei anzulegen. Fehlt dieses Recht, wird der Download gar nicht erst ausgeführt, sondern ein entsprechender Hinweis generiert, der auf das fehlende Recht hinweist. [Rückmeldung von Mike-on-Tour (phpBB.de)]
+  * Wenn ein Fehler beim Öffnen des ZIPs auftritt, wird jetzt ein Hinweis mit dem genauen ZipArchive Fehler-Code (Konstante und Wert) generiert.
+  * Die Quelle (Ordner oder ZIP) der Prüfsummen-Dateien wird jetzt auch als Hinweis generiert, damit diese Info bei Fehlermeldungen ebenfalls angezeigt wird.
+  * Der Hinweis wenn das Prüfsummen-Paket nicht gefunden werden konnte, ist nur dann sinnvoll, wenn im Kontext alle notwendigen Voraussetzungen erfüllt sind. Daher diesen Hinweis in den passenden Code Abschnitt verschoben.
+* Code Optimierung.
+
 ### 1.4.1
 (2024-07-10)
 
@@ -5,12 +16,13 @@
   * cURL
   * Sockets
   * file_get_contents (fopen)
-* Fehlerbehandlung bezüglich Download des Prüfsummen-Pakets weiter ausgebaut und auch zusätzliche Hinweise hinzugefügt:
+* Fehlerbehandlung bezüglich Prüfsummen-Paket weiter ausgebaut und auch zusätzliche Hinweise hinzugefügt:
   * Wenn cURL nicht verfügbar ist.
   * Wenn Sockets nicht verfügbar ist.
   * Wenn das Prüfsummen-Paket im phpBB Root nicht gefunden wurde.
   * Wenn die übertragenen Daten keinen korrekten ZIP Header enthalten.
 * Die Dienste und ihre Zustände bezüglich Handhabung des Prüfsummen-Pakets werden jetzt explizit im Bericht am Ende bei den Skript/PHP Informationen gelistet.
+* Code Optimierung.
 
 ### 1.4.0
 (2024-07-07)

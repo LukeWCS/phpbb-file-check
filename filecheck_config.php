@@ -10,6 +10,6 @@
 
 $config = [
 	'debug_mode'		=> 0,
-	'zip_url_pattern'	=> 'https://downloads.phpbb.de/pakete/deutsch/{major}.{minor}/{major}.{minor}.{patchlevel}/',
-	'zip_name_pattern'	=> 'phpBB-{major}.{minor}.{patchlevel}-deutsch-FileCheck-MD5.zip',
+	'zip_url_pattern'	=> 'https://downloads.phpbb.de/pakete/deutsch/{major}.{minor}/{major}.{minor}.{patch}/',
+	'zip_name_pattern'	=> 'phpBB-{major}.{minor}.{patch}-deutsch-FileCheck-MD5.zip',
 ];

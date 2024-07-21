@@ -34,7 +34,7 @@ $checksum_file_flags	= [];
 $config					= [];
 $empty_file_hash		= 'd41d8cd98f00b204e9800998ecf8427e';
 
-$ver					= '1.4.1';
+$ver					= '1.4.2';
 $title					= "phpBB File Check v{$ver}";
 $output					= html_start();
 $notices				= '';
@@ -123,25 +123,40 @@ else
 	notice("phpBB file [{$constants_file}] not found.");
 }
 $checksum_source = isset($PHPBB_VERSION) && !file_exists(ROOT_PATH . $checksum_file) ? 'ZIP' : 'Folder';
+notice("MD5 source: {$checksum_source}");
 
 /*
 * Automatic download and opening of the appropriate checksum package
 */
 if ($checksum_source == 'ZIP')
 {
-	$zip_url	= str_replace(['{major}', '{minor}', '{patchlevel}'], $PHPBB_VERSION_SEGMENTS, $config['zip_url_pattern']);
-	$zip_name	= str_replace(['{major}', '{minor}', '{patchlevel}'], $PHPBB_VERSION_SEGMENTS, $config['zip_name_pattern']);
+	notice('zip_url_pattern not set.',				$config['zip_url_pattern'] == '');
+	notice('zip_name_pattern not set.',				$config['zip_name_pattern'] == '');
+	notice('ZipArchive extension not available.',	!$service['ZipArchive']);
+	notice('cURL extension not available.',			!$service['cURL']);
+	notice('Sockets not available.',				!$service['Sockets']);
+	notice('allow_url_fopen not enabled.',			!$service['allow_url_fopen']);
 
-	notice("Checksum package [{$zip_name}] not found.",	!file_exists(ROOT_PATH . $zip_name) && $service['ZipArchive']);
-	notice('zip_url_pattern not set.',					$config['zip_url_pattern'] == '');
-	notice('zip_name_pattern not set.',					$config['zip_name_pattern'] == '');
-	notice('ZipArchive extension not available.',		!$service['ZipArchive']);
-	notice('cURL extension not available.',				!$service['cURL']);
-	notice('Sockets not available.',					!$service['Sockets']);
-	notice('allow_url_fopen not enabled.',				!$service['allow_url_fopen']);
+	$zip_url	= str_replace(['{major}', '{minor}', '{patch}'], $PHPBB_VERSION_SEGMENTS, $config['zip_url_pattern']);
+	$zip_name	= str_replace(['{major}', '{minor}', '{patch}'], $PHPBB_VERSION_SEGMENTS, $config['zip_name_pattern']);
 
-	if ($config['zip_url_pattern'] != '' && $config['zip_name_pattern'] != '' && !file_exists(ROOT_PATH . $zip_name) && $service['ZipArchive'])
+	if ($service['ZipArchive'] && $config['zip_name_pattern'] != '' && !file_exists(ROOT_PATH . $zip_name))
 	{
+		$save_test = file_put_contents(ROOT_PATH . $zip_name, 'save test') !== false;
+		if ($save_test)
+		{
+			unlink(ROOT_PATH . $zip_name);
+		}
+		else
+		{
+			notice("No permission to create [{$zip_name}].");
+		}
+	}
+
+	if (($save_test ?? null) === true && $config['zip_url_pattern'] != '')
+	{
+		notice("Checksum package [{$zip_name}] not found.");
+
 		if ($service['cURL'])
 		{
 			$curl_status = [];
@@ -150,13 +165,13 @@ if ($checksum_source == 'ZIP')
 		}
 		else if ($service['Sockets'])
 		{
-			preg_match('/(http[s]?):\/\/(.*?)(\/.*)\//', $zip_url, $url_parts);
-			if (count($url_parts) == 4)
+			preg_match('/(http[s]?):\/\/(.*?)(\/.*)\//', $zip_url, $matches);
+			if (count($matches) == 4)
 			{
 				$socket_status = [];
-				$socket_port = $url_parts[1] == 'https' ? 443 : 80;
-				$socket_host = $url_parts[2];
-				$socket_dir = $url_parts[3];
+				$socket_port = $matches[1] == 'https' ? 443 : 80;
+				$socket_host = $matches[2];
+				$socket_dir = $matches[3];
 				$ZIP_content = socket_get_contents($socket_host, $socket_dir, $zip_name, $socket_port, $socket_status) ?? false;
 				notice('Sockets: ' . ($socket_status[0] ?? ''));
 			}
@@ -169,6 +184,7 @@ if ($checksum_source == 'ZIP')
 		else if ($service['allow_url_fopen'])
 		{
 			$ZIP_content = @file_get_contents($zip_url . $zip_name);
+			notice('file_get_contents: ' . ($ZIP_content === false ? 'false' : 'true'));
 		}
 		else
 		{
@@ -195,11 +211,21 @@ if ($checksum_source == 'ZIP')
 		}
 	}
 
-	if ($config['zip_name_pattern'] != '' && file_exists(ROOT_PATH . $zip_name) && $service['ZipArchive'])
+	if ($service['ZipArchive'] && $config['zip_name_pattern'] != '' && file_exists(ROOT_PATH . $zip_name))
 	{
 		$zip = new ZipArchive;
-		if ($zip->open(ROOT_PATH . $zip_name) !== true)
+		$zip_rc = $zip->open(ROOT_PATH . $zip_name);
+
+		if ($zip_rc !== true)
 		{
+			unset($zip);
+			$reflect_zip = new ReflectionClass('ZipArchive');
+			$zip_constants = array_filter($reflect_zip->getConstants(), function ($key) {
+				return substr($key, 0, 3) == 'ER_';
+			}, ARRAY_FILTER_USE_KEY);
+			$zip_constants = array_flip($zip_constants);
+			unset($reflect_zip);
+			notice('ZipArchive: ' . (isset($zip_constants[$zip_rc]) ? "{$zip_constants[$zip_rc]} " : '') . "(RC: {$zip_rc})");
 			notice("Checksum package [{$zip_name}] could not be opened.");
 		}
 	}
@@ -342,7 +368,7 @@ if (isset($zip))
 */
 $output .= sprintf('Version mode : %1$s', $checksum_version_mode) . EOL;
 $output .= sprintf('MD5 source   : %1$s (%2$s)', $checksum_source, implode(', ', $checksum_file_flags)) . EOL;
-$output .= sprintf('phpBB Version: %1$s', $PHPBB_VERSION ?? 'unknown') . EOL;
+$output .= sprintf('phpBB Version: %1$s', $PHPBB_VERSION ?? 'Unknown') . EOL;
 $output .= sprintf('MD5 Version 1: %1$s (%2$s)', $checksum_ver, $checksum_name) . EOL;
 $output .= sprintf('MD5 Version 2: ' . ($checksum_diff_ver ? '%1$s (%2$s)' : '-'), $checksum_diff_ver, $checksum_diff_name) . EOL;
 $output .= sprintf('PHP Version  : %1$s (%2$s)', PHP_VERSION, PHP_OS) . EOL;
@@ -732,7 +758,7 @@ function load_checksum_file(string $checksum_file, string &$checksum_name, strin
 	}
 
 	preg_match('/^(.*?):([0-9]+\.[0-9]+\.[0-9]+)/', end($checksums), $matches);
-	if (is_array($matches) && count($matches) == 3)
+	if (count($matches) == 3)
 	{
 		array_pop($checksums);
 		$checksum_name	= $matches[1];
@@ -749,7 +775,7 @@ function load_checksum_file(string $checksum_file, string &$checksum_name, strin
 	{
 		$line_num++;
 		preg_match('/^([0-9a-f]{32}) \*([' . VALID_CHARS . ']+)$/', $row, $matches);
-		if (is_array($matches) && count($matches) == 3)
+		if (count($matches) == 3)
 		{
 			$hash			= $matches[1];
 			$file			= $matches[2];
@@ -836,11 +862,11 @@ function curl_get_contents(string $url, array &$status): ?string
 	return ($status['http_code'] ?? 0) == 200 && $content !== false ? $content : null;
 }
 
-function socket_get_contents(string $host, string $directory, string $file, int $port, array &$status)
+function socket_get_contents(string $host, string $directory, string $file, int $port, array &$status): ?string
 {
 	$socket_h = fsockopen(($port == 443 ? 'ssl://' : '') . $host, $port, $error_number, $error_string, 10);
-	fwrite($socket_h, "GET $directory/$file HTTP/1.0\r\n");
-	fwrite($socket_h, "HOST: $host\r\n");
+	fwrite($socket_h, "GET {$directory}/{$file} HTTP/1.0\r\n");
+	fwrite($socket_h, "HOST: {$host}\r\n");
 	fwrite($socket_h, "Connection: close\r\n\r\n");
 
 	$status = [];
@@ -851,7 +877,7 @@ function socket_get_contents(string $host, string $directory, string $file, int 
 		{
 			break;
 		}
-		$status[] .= $line;
+		$status[] = $line;
 	}
 	$content = '';
 	while (!feof($socket_h))

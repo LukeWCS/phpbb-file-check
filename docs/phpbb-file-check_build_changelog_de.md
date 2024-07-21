@@ -1,7 +1,16 @@
+### 1.4.2
+* Release (2024-07-21)
+* Fix: War das Prüfsummen-Paket zwar vorhanden, aber konnte nicht erfolgreich geöffnet werden, z.B. aufgrund eines Defekts, führte das zu einem FATAL.
+* Die Quelle (Ordner oder ZIP) der Prüfsummen-Dateien wird jetzt auch als Hinweis generiert, damit diese Info bei Fehlermeldungen ebenfalls angezeigt wird.
+* Der Hinweis wenn das Prüfsummen-Paket nicht gefunden werden konnte, ist nur dann sinnvoll, wenn im Kontext alle notwendigen Voraussetzungen erfüllt sind. Daher diesen Hinweis in den passenden Code Abschnitt verschoben.
+* Vor dem Download des Prüfsummen-Pakets wird zuerst geprüft, ob FC das Recht hat, eine Datei anzulegen. Fehlt dieses Recht, wird der Download nicht mehr ausgeführt und ein entsprechender Hinweis generiert, der auf das fehlende Recht hinweist. [Rückmeldung von Mike-on-Tour (phpBB.de)]
+* Wenn ein Fehler beim Öffnen des ZIPs auftritt, wird jetzt ein Hinweis mit dem genauen ZipArchive Fehler-Code (Konstante und Wert) generiert.
+* Code Optimierung.
+
 ### 1.4.1
 * Release (2024-07-10)
-* Vor dem Speichern des ZIPs wird zuerst geprüft, ob die übertragenen Daten überhaupt ein ZIP enthalten. Wenn nicht, wird das entsprechend als Hinweis gemeldet.
-* Konnte das ZIP nicht im Root gefunden werden, wird das jetzt explizit als Hinweis gemeldet. [Rückmeldung von Kirk (phpBB.de)]
+* Vor dem Speichern des ZIPs wird zuerst geprüft, ob die übertragenen Daten überhaupt ein ZIP enthalten. Wenn nicht, wird ein entsprechender Hinweis generiert.
+* Konnte das ZIP nicht im Root gefunden werden, wird dafür ein Hinweis generiert. [Rückmeldung von Kirk (phpBB.de)]
 * Probleme bezüglich ZIP werden nicht mehr als `FC_ERROR` getriggert, sondern nur noch als `FC_NOTICE`, da diese Probleme streng genommen für FC noch keinen Grund für einen Abbruch darstellen. Dazu musste der Code an mehreren Stellen geändert werden.
 * Code Optimierung.
 
@@ -9,8 +18,8 @@
 * Fix: Bei einem Abbruch wurde kein Hinweis für den deaktivierten Socket Dienst generiert. Ich habe vergessen das einzubauen. [Rückmeldung von Kirk (phpBB.de)]
 
 #### 1.4.1-b1
-* Für den Download des Prüfsummen-Pakets wird jetzt zusätzlich cURL und Socket verwendet. Ist beides nicht möglich, wird die bisherige Funktion `file_get_contents()` verwendet.
-* Beim Download des Prüfsummen-Pakets werden die Hinweise der Konfig und Dienste jetzt zuerst generiert, damit diese auch bei einer DL Fehlermeldung ebenfalls zur Verfügung stehen.
+* Für den Download des Prüfsummen-Pakets wird jetzt zusätzlich cURL und Socket verwendet. Ist beides nicht vorhanden, wird die bisherige Funktion `file_get_contents()` verwendet.
+* Beim Download des Prüfsummen-Pakets werden die Hinweise bez. Konfig und Dienste jetzt zuerst generiert, damit diese auch bei einer DL Fehlermeldung ebenfalls zur Verfügung stehen.
 * Die Dienste und ihre Zustände werden explizit im Bericht bei den PHP Informationen gelistet.
 
 ### 1.4.0
@@ -20,7 +29,7 @@
 * Die Prüfung der PHP Voraussetzungen (Min/Max Version) war sinnfrei und wurde entfernt.
 
 #### 1.4.0-b2
-* Fehlt die FC Konfig Datei `filecheck_config.php`, wird das jetzt als Hinweis gemeldet, sofern ein Abbruch getriggert wird. [Vorschlag von Mike-on-Tour]
+* Fehlt die FC Konfig Datei `filecheck_config.php`, wird das dafür jetzt ein Hinweis generiert. [Vorschlag von Mike-on-Tour]
 * Es gibt jetzt eine explizite Funktion für die Hinweise und diese werden auch nicht mehr in verschiedenen Variablen gesammelt, sondern nur noch in einer.
 * Bei einer Vorab-Version von phpBB (zum Beispiel 3.3.12-RC1) hatte FC einen Hinweis ausgegeben, dass die Version nicht ermittelt werden konnte. Ursache waren zu strenge Regeln bei der Prüfung der Versionsnummer, durch die lediglich Release-Versionen akzeptiert wurden. Jetzt kann FC auch mit Vorab-Versionen umgehen und direkt eine entsprechende Fehlermeldung ausgeben. [Gemeldet von Scanialady]
 
