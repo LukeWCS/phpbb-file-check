@@ -8,8 +8,12 @@
 *
 */
 
+# phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames config
+
 $config = [
 	'debug_mode'		=> 0,
-	'zip_url_pattern'	=> 'https://downloads.phpbb.de/pakete/deutsch/{major}.{minor}/{major}.{minor}.{patch}/',
-	'zip_name_pattern'	=> 'phpBB-{major}.{minor}.{patch}-deutsch-FileCheck-MD5.zip',
+	'zip_url_pattern'	=> 'https://downloads.phpbb.de/pakete/deutsch/{MAJOR}.{MINOR}/{MAJOR}.{MINOR}.{PATCH}/',
+	'zip_name_pattern'	=> 'phpBB-{MAJOR}.{MINOR}.{PATCH}-deutsch-FileCheck-MD5.zip',
 ];
+
+# phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames

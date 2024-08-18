@@ -1,3 +1,12 @@
+### 1.4.3
+(2024-08-18)
+
+* Zusätzlich zu den FC Meldungstypen `FC_NOTICE` und `FC_ERROR` gibt es jetzt auch `FC_WARNING`. Warnungen sind Fehler die im weiteren Verlauf zu einem Abbruch führen können.
+* Fehlerbehandlung bezüglich Prüfsummen-Paket:
+  * Bei ZIP-Fehler wird jetzt entweder die Fehler-Konstante (wenn verfügbar) oder der Fehler-Wert angezeigt, nicht mehr beides.
+* Code Optimierung.
+* Harmonisierung mehrerer Variablennamen nach phpBB Richtlinien.
+
 ### 1.4.2
 (2024-07-21)
 
