@@ -1,3 +1,9 @@
+### 1.4.4
+(2024-11-23)
+
+* Bei den letzten Support-Fällen ist aufgefallen, das der Meldungstyp `CHANGED` in einer spezifischen Situation unpassend ist: wenn die Prüfsumme einer veralteten Original-Datei ermittelt wurde. Denn in diesem Fall ist die Datei ja nicht "geändert" worden, sondern es ist eine unveränderte Original-Datei und lediglich veraltet. Daher den Meldungstyp auf `DIFFERENT` geändert. Das ist präziser und passt auf alle Situationen, bei denen die betreffende Datei nicht den erwarteten Inhalt hat.
+* Explizite Freigabe für PHP 8.4.
+
 ### 1.4.3
 (2024-08-18)
 

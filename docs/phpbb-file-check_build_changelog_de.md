@@ -1,18 +1,11 @@
+### 1.4.4
+* Release (2024-11-23)
+
 ### 1.4.3
 * Release (2024-08-18)
-* Zusätzlich zu den FC Meldungstypen `FC_NOTICE` und `FC_ERROR` gibt es jetzt auch `FC_WARNING`. Warnungen sind Fehler die im weiteren Verlauf zu einem Abbruch führen können.
-* Bei ZIP-Fehler wird jetzt entweder die Fehler-Konstante oder der Fehler-Wert angezeigt, nicht mehr beides.
-* Code Optimierung.
-* Harmonisierung mehrerer Variablennamen nach phpBB Richtlinien.
 
 ### 1.4.2
 * Release (2024-07-21)
-* Fix: War das Prüfsummen-Paket zwar vorhanden, aber konnte nicht erfolgreich geöffnet werden, z.B. aufgrund eines Defekts, führte das zu einem FATAL.
-* Die Quelle (Ordner oder ZIP) der Prüfsummen-Dateien wird jetzt auch als Hinweis generiert, damit diese Info bei Fehlermeldungen ebenfalls angezeigt wird.
-* Der Hinweis wenn das Prüfsummen-Paket nicht gefunden werden konnte, ist nur dann sinnvoll, wenn im Kontext alle notwendigen Voraussetzungen erfüllt sind. Daher diesen Hinweis in den passenden Code Abschnitt verschoben.
-* Vor dem Download des Prüfsummen-Pakets wird zuerst geprüft, ob FC das Recht hat, eine Datei anzulegen. Fehlt dieses Recht, wird der Download nicht mehr ausgeführt und ein entsprechender Hinweis generiert, der auf das fehlende Recht hinweist. [Rückmeldung von Mike-on-Tour (phpBB.de)]
-* Wenn ein Fehler beim Öffnen des ZIPs auftritt, wird jetzt ein Hinweis mit dem genauen ZipArchive Fehler-Code (Konstante und Wert) generiert.
-* Code Optimierung.
 
 ### 1.4.1
 * Release (2024-07-10)

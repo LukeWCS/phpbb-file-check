@@ -6,7 +6,7 @@
 * @copyright (c) 2023 LukeWCS <phpBB.de>
 * @license GNU General Public License, version 2 (GPL-2.0-only)
 *
-* PHP requirements: 7.1.0 - 8.3.x
+* PHP requirements: 7.1.0 - 8.4.x
 *
 */
 
@@ -32,7 +32,7 @@ const MSG_PREFIXES		= [
 	'FC_NOTICE',
 ];
 
-$ver					= '1.4.3';
+$ver					= '1.4.4';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -406,7 +406,7 @@ else
 * The core - processing checksums
 */
 $count_missing		= 0;
-$count_changed		= 0;
+$count_different	= 0;
 $count_error		= 0;
 $count_warning		= 0;
 $count_notice		= 0;
@@ -479,7 +479,7 @@ foreach ($hash_list as $file => $hash_data)
 			}
 			else
 			{
-				$result_list[] = $result_struct($file, $hash_data[0], '* CHANGED', '(hash: ' . $calc_hash . ')', $count_changed);
+				$result_list[] = $result_struct($file, $hash_data[0], '* DIFFERENT', '(hash: ' . $calc_hash . ')', $count_different);
 			}
 		}
 	}
@@ -528,23 +528,23 @@ add_list_lines($output);
 $summary = '';
 if ($config['debug_mode'])
 {
-	$summary .=	sprintf('Ignored      : % ' . $checksums_count_len . 'u', $count_ignored) . EOL;
-	$summary .=	sprintf('Exceptions   : % ' . $checksums_count_len . 'u', $count_exceptions) . EOL;
+	$summary .=	sprintf('Ignored        : % ' . $checksums_count_len . 'u', $count_ignored) . EOL;
+	$summary .=	sprintf('Exceptions     : % ' . $checksums_count_len . 'u', $count_exceptions) . EOL;
 }
-$summary .=		sprintf('Checked files: % ' . $checksums_count_len . 'u', $count_checked) . EOL;
-$summary .=		sprintf('Missing files: % ' . $checksums_count_len . 'u', $count_missing) . EOL;
+$summary .=		sprintf('Checked files  : % ' . $checksums_count_len . 'u', $count_checked) . EOL;
+$summary .=		sprintf('Missing files  : % ' . $checksums_count_len . 'u', $count_missing) . EOL;
 if ($count_warning || $config['debug_mode'])
 {
-	$summary .=	sprintf('Warnings     : % ' . $checksums_count_len . 'u', $count_warning) . EOL;
+	$summary .=	sprintf('Warnings       : % ' . $checksums_count_len . 'u', $count_warning) . EOL;
 }
-$summary .=		sprintf('Changed files: % ' . $checksums_count_len . 'u', $count_changed) . EOL;
+$summary .=		sprintf('Different files: % ' . $checksums_count_len . 'u', $count_different) . EOL;
 if ($count_notice || $config['debug_mode'])
 {
-	$summary .=	sprintf('Notices      : % ' . $checksums_count_len . 'u', $count_notice) . EOL;
+	$summary .=	sprintf('Notices        : % ' . $checksums_count_len . 'u', $count_notice) . EOL;
 }
 if ($count_error || $config['debug_mode'])
 {
-	$summary .=	sprintf('FC Errors    : % ' . $checksums_count_len . 'u', $count_error) . EOL;
+	$summary .=	sprintf('FC Errors      : % ' . $checksums_count_len . 'u', $count_error) . EOL;
 }
 
 $service_list = array_map(function (string $key, int $value) {
