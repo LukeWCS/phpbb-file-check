@@ -27,12 +27,12 @@ const FC_WARNING		= 2;
 const FC_NOTICE			= 3;
 const MSG_PREFIXES		= [
 	'FC_UNKNOWN',
-	'FC_ERROR',
+	'FC_ERROR  ',
 	'FC_WARNING',
-	'FC_NOTICE',
+	'FC_NOTICE ',
 ];
 
-$ver					= '1.4.4';
+$ver					= '1.4.5-b1';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -69,6 +69,10 @@ $service = [
 	'cURL'				=> extension_loaded('curl'),
 	'Sockets'			=> function_exists('fsockopen'),
 	'allow_url_fopen'	=> (bool) ini_get('allow_url_fopen'),
+	// 'ZipArchive'		=> 0,
+	// 'cURL'				=> 0,
+	// 'Sockets'			=> 0,
+	// 'allow_url_fopen'	=> 0,
 ];
 
 /*
@@ -263,7 +267,10 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_file)
 }
 else
 {
-	terminate("Checksum file [{$checksum_file}] not found.");
+	terminate("Checksum file [{$checksum_file}] not found." . ($checksum_source == 'ZIP'
+		? html_zip_instructions($zip_url . $zip_name, $service['ZipArchive'])
+		: ''
+	));
 }
 
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_diff_file)
@@ -749,6 +756,30 @@ _HTML_;
 </body>
 </html>
 
+_HTML_;
+
+	return $output;
+}
+
+function html_zip_instructions(string $zip_file_url, bool $zip_service): string
+{
+	if (IS_BROWSER)
+	{
+		$zip_file_url = '<a href="' . $zip_file_url . '">' . $zip_file_url . '</a>';
+	}
+
+	$step_2 = ($zip_service
+		? '2. Upload the archive as it is to the root directory of phpBB, i.e. where config.php is.'
+		: '2. Unpack the archive and upload all unpacked files to the root directory of phpBB, i.e. where config.php is.'
+	);
+
+	$output = EOL . EOL . <<<"_HTML_"
+Please follow these steps:
+--------------------------
+1. Download the following archive:
+{$zip_file_url}
+{$step_2}
+3. Run phpBB File Check again.
 _HTML_;
 
 	return $output;

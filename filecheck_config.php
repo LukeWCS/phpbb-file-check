@@ -10,6 +10,9 @@
 
 # phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames config
 
+/*
+	DO NOT MAKE ANY CHANGES HERE UNLESS YOU HAVE RECEIVED INSTRUCTIONS TO DO SO!
+*/
 $config = [
 	'debug_mode'		=> 0,
 	'zip_url_pattern'	=> 'https://downloads.phpbb.de/pakete/deutsch/{MAJOR}.{MINOR}/{MAJOR}.{MINOR}.{PATCH}/',

@@ -1,3 +1,6 @@
+#### 1.4.5-b1
+* Um den zusätzlichen Aufwand bei eingeschränkten Hosting-Paketen zu reduzieren, bei denen sämtliche Download-Funktionen deaktiviert sind und/oder die ZIP-Funktion deaktiviert ist, generiert FC jetzt eine individuelle 3-Schritt-Anleitung in Abhängigkeit der vorhandenen Hosting-Funktionen und der installierten phpBB Version. Dadurch werden die notwendigen Schritte der Anleitung 4.b im offiziellen FC Foren-Thema auf ein Minimum reduziert und diese Anleitung muss im Normalfall gar nicht mehr gesichtet werden, da FC direkt selber die nötige Schritte anzeigen kann.
+
 ### 1.4.4
 * Release (2024-11-23)
 
