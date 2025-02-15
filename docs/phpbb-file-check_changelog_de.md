@@ -1,13 +1,19 @@
+#### 1.4.5
+(2025-02-15)
+
+* Um den zusätzlichen Aufwand bei eingeschränkten Hosting-Paketen zu reduzieren, bei denen sämtliche Funktionen/Erweiterungen für den Zugriff auf externe Dateien deaktiviert sind und/oder die ZIP Erweiterung deaktiviert ist, gibt es eine kleine Verbesserung: FC generiert in einer solchen Situation jetzt eine individuelle Anleitung in Abhängigkeit der vorhandenen Hosting-Funktionen und der installierten phpBB Version, inklusive einem direkten Download-Link zum passenden Prüfsummen-Paket. Dadurch werden die notwendigen Schritte der Anleitung 4.b im offiziellen FC Foren-Thema auf ein Minimum reduziert und diese Anleitung muss im Normalfall gar nicht mehr gesichtet werden, da FC selber die nötigen Schritte und den Link anzeigen kann.
+* Code Optimierung.
+
 ### 1.4.4
 (2024-11-23)
 
-* Bei den letzten Support-Fällen ist aufgefallen, das der Meldungstyp `CHANGED` in einer spezifischen Situation unpassend ist: wenn die Prüfsumme einer veralteten Original-Datei ermittelt wurde. Denn in diesem Fall ist die Datei ja nicht "geändert" worden, sondern es ist eine unveränderte Original-Datei und lediglich veraltet. Daher den Meldungstyp auf `DIFFERENT` geändert. Das ist präziser und passt auf alle Situationen, bei denen die betreffende Datei nicht den erwarteten Inhalt hat.
+* Bei den letzten Support-Fällen ist aufgefallen, dass der Meldung-Typ `CHANGED` in einer spezifischen Situation unpassend ist: Wenn die Prüfsumme einer veralteten Original-Datei ermittelt wurde, denn in diesem Fall ist die Datei ja nicht "geändert" worden. Daher den Meldung-Typ auf `DIFFERENT` geändert. Das ist präziser und passt auf alle Situationen, bei denen die betreffende Datei nicht den erwarteten Inhalt hat.
 * Explizite Freigabe für PHP 8.4.
 
 ### 1.4.3
 (2024-08-18)
 
-* Zusätzlich zu den FC Meldungstypen `FC_NOTICE` und `FC_ERROR` gibt es jetzt auch `FC_WARNING`. Warnungen sind Fehler die im weiteren Verlauf zu einem Abbruch führen können.
+* Zusätzlich zu den FC Meldung-Typen `FC_NOTICE` und `FC_ERROR` gibt es jetzt auch `FC_WARNING`. Warnungen sind Fehler die im weiteren Verlauf zu einem Abbruch führen können.
 * Fehlerbehandlung bezüglich Prüfsummen-Paket:
   * Bei ZIP-Fehler wird jetzt entweder die Fehler-Konstante (wenn verfügbar) oder der Fehler-Wert angezeigt, nicht mehr beides.
 * Code Optimierung.

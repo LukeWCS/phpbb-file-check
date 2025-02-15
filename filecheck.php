@@ -26,13 +26,18 @@ const FC_ERROR			= 1;
 const FC_WARNING		= 2;
 const FC_NOTICE			= 3;
 const MSG_PREFIXES		= [
-	'FC_UNKNOWN',
-	'FC_ERROR  ',
-	'FC_WARNING',
-	'FC_NOTICE ',
+	'FC_UNKNOWN: ',
+	'FC_ERROR  : ',
+	'FC_WARNING: ',
+	'FC_NOTICE : ',
+];
+const VERSION_VARS	= [
+	'{MAJOR}',
+	'{MINOR}',
+	'{PATCH}',
 ];
 
-$ver					= '1.4.5-b1';
+$ver					= '1.4.5';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -40,26 +45,23 @@ $ignore_file			= 'filecheck_ignore.txt';
 $exceptions_file		= 'filecheck_exceptions.txt';
 $config_file			= 'filecheck_config.php';
 $constants_file			= 'includes/constants.php';
-
 $checksum_file			= $checksum_file_name . $checksum_file_suffix;
 $checksum_diff_file		= $checksum_file_name . '_diff' . $checksum_file_suffix;
 $checksum_version_mode	= 'Manually';
 $checksum_file_flags	= [];
 $config					= [];
 $messages				= '';
-$output					= html_start();
-$start_time				= microtime(true);
-
-$ignore_list = [
+$ignore_list			= [
 	'^\.git',
 	'\/\.git',
 ];
-
-$exception_list = [
+$exception_list			= [
 	'docs/',
 	'ext/phpbb/viglink/',
 	'install/',
 ];
+$start_time				= microtime(true);
+$output					= html_start();
 
 /*
 * Check services
@@ -69,10 +71,6 @@ $service = [
 	'cURL'				=> extension_loaded('curl'),
 	'Sockets'			=> function_exists('fsockopen'),
 	'allow_url_fopen'	=> (bool) ini_get('allow_url_fopen'),
-	// 'ZipArchive'		=> 0,
-	// 'cURL'				=> 0,
-	// 'Sockets'			=> 0,
-	// 'allow_url_fopen'	=> 0,
 ];
 
 /*
@@ -151,8 +149,8 @@ if ($checksum_source == 'ZIP')
 	message(FC_NOTICE, 'Sockets not available.',				!$service['Sockets']);
 	message(FC_NOTICE, 'allow_url_fopen not enabled.',			!$service['allow_url_fopen']);
 
-	$zip_url	= str_ireplace(['{MAJOR}', '{MINOR}', '{PATCH}'], $phpbb_version_segments, $config['zip_url_pattern']);
-	$zip_name	= str_ireplace(['{MAJOR}', '{MINOR}', '{PATCH}'], $phpbb_version_segments, $config['zip_name_pattern']);
+	$zip_url	= str_ireplace(VERSION_VARS, $phpbb_version_segments, $config['zip_url_pattern']);
+	$zip_name	= str_ireplace(VERSION_VARS, $phpbb_version_segments, $config['zip_name_pattern']);
 
 	if ($service['ZipArchive'] && $zip_name != '' && !file_exists(ROOT_PATH . $zip_name))
 	{
@@ -619,7 +617,7 @@ function message(int $type, string $message, bool $condition = true): void
 	{
 		global $messages;
 
-		$messages .= (MSG_PREFIXES[$type] ?? MSG_PREFIXES[FC_UNKNOWN]) . ': ' . $message . EOL;
+		$messages .= (MSG_PREFIXES[$type] ?? MSG_PREFIXES[FC_UNKNOWN]) . $message . EOL;
 	}
 }
 
@@ -765,12 +763,12 @@ function html_zip_instructions(string $zip_file_url, bool $zip_service): string
 {
 	if (IS_BROWSER)
 	{
-		$zip_file_url = '<a href="' . $zip_file_url . '">' . $zip_file_url . '</a>';
+		$zip_file_url = "<a href=\"{$zip_file_url}\">{$zip_file_url}</a>";
 	}
 
 	$step_2 = ($zip_service
-		? '2. Upload the archive as it is to the root directory of phpBB, i.e. where config.php is.'
-		: '2. Unpack the archive and upload all unpacked files to the root directory of phpBB, i.e. where config.php is.'
+		? '2. Upload the archive as it is to the root directory of phpBB, i.e. where [config.php] is.'
+		: '2. Unpack the archive and upload all unpacked files to the root directory of phpBB, i.e. where [config.php] is.'
 	);
 
 	$output = EOL . EOL . <<<"_HTML_"
