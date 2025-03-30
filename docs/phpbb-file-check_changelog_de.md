@@ -1,7 +1,13 @@
-#### 1.4.5
+### 1.4.6
+(2025-03-30)
+
+* Fix: Wurde aufgrund Hoster-Beschränkungen die manuelle Anleitung (siehe 1.4.5) für das Prüfsummen-Paket angezeigt und gleichzeitig war es nicht möglich, die URL für das ZIP zu generieren, z.B. weil die Datei `filecheck_config.php` fehlte, wurde ein leerer Link erzeugt, also ein Link ohne URL und Beschriftung, was im Bericht als Leerzeile angezeigt wurde. Dadurch war die Anzeige der Anleitung sinnfrei. Dieser Fall wird jetzt abgefangen und die Anzeige der Anleitung in so einer Situation unterdrückt.
+* Im Bericht wird im Abschnitt "Script/PHP information" der Linux Zeitstempel hinzugefügt.
+
+### 1.4.5
 (2025-02-15)
 
-* Um den zusätzlichen Aufwand bei eingeschränkten Hosting-Paketen zu reduzieren, bei denen sämtliche Funktionen/Erweiterungen für den Zugriff auf externe Dateien deaktiviert sind und/oder die ZIP Erweiterung deaktiviert ist, gibt es eine kleine Verbesserung: FC generiert in einer solchen Situation jetzt eine individuelle Anleitung in Abhängigkeit der vorhandenen Hosting-Funktionen und der installierten phpBB Version, inklusive einem direkten Download-Link zum passenden Prüfsummen-Paket. Dadurch werden die notwendigen Schritte der Anleitung 4.b im offiziellen FC Foren-Thema auf ein Minimum reduziert und diese Anleitung muss im Normalfall gar nicht mehr gesichtet werden, da FC selber die nötigen Schritte und den Link anzeigen kann.
+* Um den zusätzlichen Aufwand bei eingeschränkten Hosting-Paketen zu reduzieren, bei denen sämtliche Funktionen/Erweiterungen für den Zugriff auf externe Dateien deaktiviert sind und/oder die ZIP Erweiterung deaktiviert ist, gibt es eine kleine Verbesserung: FC generiert in einer solchen Situation jetzt eine individuelle Anleitung in Abhängigkeit der vorhandenen Hosting-Funktionen und der installierten phpBB Version, inklusive einem direkten Download-Link zum passenden Prüfsummen-Paket. Dadurch werden die notwendigen Schritte der Anleitung 4.b im offiziellen FC Foren-Thema auf ein Minimum reduziert und diese Anleitung muss im Normalfall gar nicht mehr gesichtet werden, da FC selber die nötigen Informationen anzeigen kann.
 * Code Optimierung.
 
 ### 1.4.4

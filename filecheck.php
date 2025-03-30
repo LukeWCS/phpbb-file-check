@@ -31,13 +31,13 @@ const MSG_PREFIXES		= [
 	'FC_WARNING: ',
 	'FC_NOTICE : ',
 ];
-const VERSION_VARS	= [
+const VERSION_VARS		= [
 	'{MAJOR}',
 	'{MINOR}',
 	'{PATCH}',
 ];
 
-$ver					= '1.4.5';
+$ver					= '1.4.6';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -265,7 +265,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_file)
 }
 else
 {
-	terminate("Checksum file [{$checksum_file}] not found." . ($checksum_source == 'ZIP'
+	terminate("Checksum file [{$checksum_file}] not found." . ($checksum_source == 'ZIP' && $zip_url != '' && $zip_name != ''
 		? html_zip_instructions($zip_url . $zip_name, $service['ZipArchive'])
 		: ''
 	));
@@ -561,6 +561,7 @@ $exec_info .=	sprintf('Max execution time: %u seconds', ini_get('max_execution_t
 $exec_info .=	sprintf('Memory peak usage : %s bytes', number_format(memory_get_peak_usage())) . EOL;
 $exec_info .=	sprintf('Memory limit      : %s', ini_get('memory_limit')) . EOL;
 $exec_info .=	sprintf('Services          : %s', implode(', ', $service_list)) . EOL;
+$exec_info .=	sprintf('Timestamp         : %s', time()) . EOL;
 
 $output .= EOL;
 $output .= 'Finished!' . EOL;
