@@ -1,3 +1,8 @@
+### 1.5.0-b2
+* Fix: Beim Unexpected-Check sollte eine Abfrage verhindern, dass eine bestimmte Schleife unnötig oft ausgeführt wird, jedoch war diese Abfrage fehlerhaft. Dadurch wurden - als Beispiel - bei phpBB 3.3.15 insgesamt 3959 Durchläufe ausgeführt, anstatt 561.
+* Der Ordner `{root}/ext/` wird jetzt ebenfalls ignoriert.
+* Code Optimierung.
+
 ### 1.5.0-b1
 * Neue Prüfung auf unerwartete Dateien:
   * Im Anschluss des bisherigen Prüflaufs der auf Existenz und Integrität prüft, wird noch eine weitere, separate Prüfung ausgeführt, die darauf spezialisiert ist, unerwartete Dateien zu ermitteln. Das Ergebnis dieser neuen Prüfung wird dann in einer separaten, zweiten Liste angezeigt.

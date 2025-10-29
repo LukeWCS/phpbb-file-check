@@ -8,10 +8,11 @@
   * Folgende Ordner werden von der neuen Prüfung ignoriert, da diese traditionell viele individuelle Dateien enthalten:
     * `{root}/`
 	* `{root}/cache/`
+	* `{root}/ext/`
 	* `{root}/files/`
 	* `{root}/images/`
 	* `{root}/store/`
-  * Die neue Prüfung verlängert die Laufzeit von FC deutlich, etwa um den Faktor 2-3. Ob das aber auch spürbar ist, hängt stark vom Web-Server ab, wie potent dieser ist und welche Dateien von phpBB sich gerade noch im Cache des Web-Servers befinden.
+  * Die neue Prüfung verlängert die Laufzeit von FC deutlich, etwa um den Faktor 2-3. Ob das aber auch spürbar ist, hängt stark vom Web-Server ab; wie potent dieser ist und welche Dateien von phpBB sich gerade noch im Cache des Web-Servers befinden.
 * Im Bericht sind die Zeilen "Warnings:" und "Different files:" jetzt vertauscht positioniert.
 
 ### 1.4.6

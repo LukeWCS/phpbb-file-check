@@ -37,7 +37,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.0-b1';
+$ver					= '1.5.0-b2';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -63,6 +63,7 @@ $exception_list			= [
 $ignore_unexpected_list	= [
 	'^\.$',
 	'^cache',
+	'^ext',
 	'^files',
 	'^images',
 	'^store',
@@ -335,9 +336,8 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
 	}
 	$checksum_file_flags[] = 'I';
 }
-$ignore_list_regex = implode('|', $ignore_list);
-$ignore_unexpected_regex = implode('|', $ignore_unexpected_list);
-// var_dump($ignore_unexpected_regex);
+$ignore_list_regex			= implode('|', $ignore_list);
+$ignore_unexpected_regex	= implode('|', $ignore_unexpected_list);
 
 /*
 * Load and check the external exception list
@@ -417,7 +417,7 @@ else
 }
 
 /*
-* The core - processing checksums
+* Core-Check
 */
 $count_missing		= 0;
 $count_different	= 0;
@@ -427,35 +427,18 @@ $count_notice		= 0;
 $count_ignored		= 0;
 $count_exceptions	= 0;
 $count_checked		= 0;
-$result_list		= [];
+$result_core_list	= [];
 $package_folders	= [];
-$result_struct		= function (string &$file, array &$hash_data, string $msg_type, string $msg, int &$counter): array
-{
-	$counter++;
-
-	return [
-		'file'			=> $file,
-		'path'			=> dirname($file),
-		'hash_file_id'	=> $hash_data['hash_file_id'],
-		'hash_line_num'	=> $hash_data['hash_line_num'],
-		'msg_type'		=> $msg_type,
-		'msg'			=> $msg,
-	];
-};
-
 foreach ($hash_list as $file => $hash_data)
 {
 	$dirname = dirname($file);
-	// if ((($package_folders[$dirname] ?? '') === '') && $dirname !== '.')
-// var_dump($dirname);
-	if (!is_ignored($dirname, $ignore_unexpected_regex) && ($package_folders[$dirname] ?? '') === '')
+	if (!is_ignored($dirname, $ignore_unexpected_regex) && !array_key_exists($dirname, $package_folders))
 	{
-		$package_folders[$dirname] = "";
-
+		$package_folders[$dirname] = '';
 		while (strpos($dirname, '/') !== false)
 		{
 			$dirname = dirname($dirname);
-			if ((($package_folders[$dirname] ?? '') === ''))
+			if (!array_key_exists($dirname, $package_folders))
 			{
 				$package_folders[$dirname] = '';
 			}
@@ -469,11 +452,11 @@ foreach ($hash_list as $file => $hash_data)
 		{
 			if ($is_ignored)
 			{
-				$result_list[] = $result_struct($file, $hash_data[0], '- IGNORED', '', $count_ignored);
+				$result_core_list[] = result_struct($file, $hash_data[0], '- IGNORED', '', $count_ignored);
 			}
 			else
 			{
-				$result_list[] = $result_struct($file, $hash_data[0], '- EXCEPTION', '', $count_exceptions);
+				$result_core_list[] = result_struct($file, $hash_data[0], '- EXCEPTION', '', $count_exceptions);
 			}
 		}
 		continue;
@@ -482,7 +465,7 @@ foreach ($hash_list as $file => $hash_data)
 	$count_checked++;
 	if (!file_exists(ROOT_PATH . $file))
 	{
-		$result_list[] = $result_struct($file, $hash_data[0], '! MISSING', '', $count_missing);
+		$result_core_list[] = result_struct($file, $hash_data[0], '! MISSING', '', $count_missing);
 		continue;
 	}
 
@@ -494,7 +477,7 @@ foreach ($hash_list as $file => $hash_data)
 			case 'config.php':
 				if ($calc_hash == EMPTY_FILE_HASH)
 				{
-					$result_list[] = $result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes', $count_warning);
+					$result_core_list[] = result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes', $count_warning);
 				}
 				continue 2;
 		}
@@ -503,47 +486,49 @@ foreach ($hash_list as $file => $hash_data)
 		{
 			if (($hash_data[1]['hash'] ?? '') == $calc_hash)
 			{
-				$result_list[] = $result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksum_diff_name . ' hash', $count_notice);
+				$result_core_list[] = result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksum_diff_name . ' hash', $count_notice);
 			}
 			else if ($calc_hash == EMPTY_FILE_HASH)
 			{
-				$result_list[] = $result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes', $count_warning);
+				$result_core_list[] = result_struct($file, $hash_data[0], '! WARNING', 'has 0 bytes', $count_warning);
 			}
 			else
 			{
-				$result_list[] = $result_struct($file, $hash_data[0], '* DIFFERENT', '(hash: ' . $calc_hash . ')', $count_different);
+				$result_core_list[] = result_struct($file, $hash_data[0], '* DIFFERENT', '(hash: ' . $calc_hash . ')', $count_different);
 			}
 		}
 	}
 	else
 	{
-		$result_list[] = $result_struct($file, $hash_data[0], '~ ERROR', 'MD5 hash could not be calculated', $count_error);
+		$result_core_list[] = result_struct($file, $hash_data[0], '~ ERROR', 'MD5 hash could not be calculated', $count_error);
 	}
 }
 
 // var_dump($package_folders);
 
-$local_files = [];
-$result_unexpected_list = [];
+/*
+* Unexpected-Check
+*/
+$local_files			= [];
+$unexpected_files		= [];
+$result_unexpected_list	= [];
 foreach ($package_folders as $folder => $dummy)
 {
 	$folder = ($folder === '.') ? '' : $folder . '/';
-
-	// $local_files[$folder] = array_values(array_filter(glob($folder . '/{,.}*', GLOB_BRACE), 'is_file'));
 	$local_files = array_merge($local_files, array_filter(glob($folder . '{,.}*', GLOB_BRACE), 'is_file'));
-	// var_dump($folder, $local_files);
-
+// var_dump($folder, $local_files);
 }
 // var_dump(count($local_files));
 $unexpected_files = array_diff($local_files, array_keys($hash_list));
 foreach ($unexpected_files as $key => $file)
 {
-// var_dump($key);
-	$hash_data = ['hash_file_id' => 0, 'hash_line_num' => $key];
-	$result_unexpected_list[] = $result_struct($file, $hash_data, '! WARNING', 'is an unexpected file', $count_warning);
+	$hash_data = [
+		'hash_file_id'	=> 0,
+		'hash_line_num'	=> $key + 1,
+	];
+	$result_unexpected_list[] = result_struct($file, $hash_data, '! WARNING', 'is an unexpected file', $count_warning);
 	// var_dump($hash_data);
 }
-
 
 // var_dump($package_folders);
 // var_dump(array_keys($hash_list));
@@ -551,47 +536,21 @@ foreach ($unexpected_files as $key => $file)
 // var_dump($unexpected_files);
 
 
+/*
+* Display: results
+*/
 if (IS_BROWSER)
 {
 	flush_buffer();
 }
 
 $output .= EOL . 'List of core files with anomalies:';
-$output .= format_results($result_list);
+$output .= format_results($result_core_list);
 $output .= EOL . 'List of unexpected files:';
 $output .= format_results($result_unexpected_list);
 
 /*
-* Format results and add to display buffer
-*/
-// if (count($result_list) > 0 || count($result_unexpected_list) > 0)
-// {
-	// uasort($result_list, function($a, $b) {
-		// return [$a['path'], $a['file']] <=> [$b['path'], $b['file']];
-	// });
-	// $result_list = array_merge($result_list, $result_unexpected_list);
-
-	// $line_num_len = column_max_len($result_list, 'hash_line_num');
-	// $msg_type_len = column_max_len($result_list, 'msg_type');
-	// foreach ($result_list as $row)
-	// {
-		// $output .= sprintf('{%1$u:%2$ ' . $line_num_len . 'u} %3$ -' . $msg_type_len . 's: [%4$s]%5$s',
-			// /* 1 */ $row['hash_file_id'],
-			// /* 2 */ $row['hash_line_num'],
-			// /* 3 */ $row['msg_type'],
-			// /* 4 */ $row['file'],
-			// /* 5 */ ($row['msg'] != '' ? ' ' . $row['msg'] : '')
-		// ) . EOL;
-	// }
-// }
-// else
-// {
-	// $output = 'no issues found' . EOL ;
-// }
-// add_list_lines($output);
-
-/*
-* Display: results and summary
+* Display: summary
 */
 $summary = '';
 if ($config['debug_mode'])
@@ -643,6 +602,20 @@ flush_buffer();
 /*
 * Script end
 */
+
+function result_struct(string &$file, array &$hash_data, string $msg_type, string $msg, int &$counter): array
+{
+	$counter++;
+
+	return [
+		'file'			=> $file,
+		'path'			=> dirname($file),
+		'hash_file_id'	=> $hash_data['hash_file_id'],
+		'hash_line_num'	=> $hash_data['hash_line_num'],
+		'msg_type'		=> $msg_type,
+		'msg'			=> $msg,
+	];
+};
 
 function format_results(array $result_list): string
 {
