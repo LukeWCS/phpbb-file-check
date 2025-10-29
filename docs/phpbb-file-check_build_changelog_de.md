@@ -1,3 +1,18 @@
+### 1.5.0-b1
+* Neue Prüfung auf unerwartete Dateien:
+  * Im Anschluss des bisherigen Prüflaufs der auf Existenz und Integrität prüft, wird noch eine weitere, separate Prüfung ausgeführt, die darauf spezialisiert ist, unerwartete Dateien zu ermitteln. Das Ergebnis dieser neuen Prüfung wird dann in einer separaten, zweiten Liste angezeigt.
+  * Da es im Bericht nun zwei Listen gibt, haben diese entsprechende Überschriften bekommen:
+    * "List of core files with anomalies:"  
+	* "List of unexpected files:"
+  * Folgende Ordner werden von der neuen Prüfung ignoriert, da diese traditionell viele individuelle Dateien enthalten:
+    * `{root}/`
+	* `{root}/cache/`
+	* `{root}/files/`
+	* `{root}/images/`
+	* `{root}/store/`
+  * Die neue Prüfung verlängert die Laufzeit von FC deutlich, etwa um den Faktor 2-3. Ob das aber auch spürbar ist, hängt stark vom Web-Server ab, wie potent dieser ist und welche Dateien von phpBB sich gerade noch im Cache des Web-Servers befinden.
+* Im Bericht sind die Zeilen "Warnings:" und "Different files:" jetzt vertauscht positioniert.
+
 ### 1.4.6
 * Release (2025-03-30)
 
