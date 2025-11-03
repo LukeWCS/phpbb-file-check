@@ -14,7 +14,7 @@
 # phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames messages
 
 /*
-* Initialization
+	Initialization
 */
 define('IS_BROWSER', ($_SERVER['HTTP_USER_AGENT'] ?? '') != '');
 
@@ -37,7 +37,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.0-b2';
+$ver					= '1.5.0';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -72,7 +72,7 @@ $start_time				= microtime(true);
 $output					= html_start();
 
 /*
-* Check services
+	Check services
 */
 $service = [
 	'ZipArchive'		=> extension_loaded('zip'),
@@ -82,13 +82,13 @@ $service = [
 ];
 
 /*
-* Generate title
+	Generate title
 */
 $output .= $title . EOL;
 $output .= str_repeat('=', strlen($title)) . EOL;
 
 /*
-* Include config
+	Include config
 */
 if (file_exists(ROOT_PATH . $config_file))
 {
@@ -105,7 +105,7 @@ $config['zip_name_pattern']	= $config['zip_name_pattern']	?? '';
 $output .= ($config['debug_mode'] ? '(DEBUG MODE)' . EOL . EOL : EOL);
 
 /*
-* Get the phpBB version from constants.php
+	Get the phpBB version from constants.php
 */
 if (file_exists(ROOT_PATH . $constants_file))
 {
@@ -142,11 +142,11 @@ else
 {
 	message(FC_WARNING, "phpBB file [{$constants_file}] not found.");
 }
-$checksum_source = isset($phpbb_version) && !file_exists(ROOT_PATH . $checksum_file) ? 'ZIP' : 'Folder';
+$checksum_source = (isset($phpbb_version) && !file_exists(ROOT_PATH . $checksum_file)) ? 'ZIP' : 'Folder';
 message(FC_NOTICE, "MD5 source: {$checksum_source}");
 
 /*
-* Automatic download and opening of the appropriate checksum package
+	Automatic download and opening of the appropriate checksum package
 */
 if ($checksum_source == 'ZIP')
 {
@@ -189,7 +189,7 @@ if ($checksum_source == 'ZIP')
 			if (count($matches) == 4)
 			{
 				$socket_status = [];
-				$socket_port = $matches[1] == 'https' ? 443 : 80;
+				$socket_port = ($matches[1] == 'https') ? 443 : 80;
 				$socket_host = $matches[2];
 				$socket_dir = $matches[3];
 				$zip_content = socket_get_contents($socket_host, $socket_dir, $zip_name, $socket_port, $socket_status) ?? false;
@@ -204,7 +204,7 @@ if ($checksum_source == 'ZIP')
 		else if ($service['allow_url_fopen'])
 		{
 			$zip_content = @file_get_contents($zip_url . $zip_name);
-			message(FC_NOTICE, 'file_get_contents: ' . ($zip_content === false ? 'false' : 'true'));
+			message(FC_NOTICE, 'file_get_contents: ' . (($zip_content === false) ? 'false' : 'true'));
 		}
 		else
 		{
@@ -252,7 +252,7 @@ if ($checksum_source == 'ZIP')
 }
 
 /*
-* Load the checksum files into the hash list
+	Load the checksum files into the hash list
 */
 $checksum_name		= '';
 $checksum_ver		= '';
@@ -296,7 +296,7 @@ $count_checksums		= count($hash_list);
 $checksums_count_len	= strlen($count_checksums);
 
 /*
-* Load and check the external ignore list
+	Load and check the external ignore list
 */
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
 	|| $checksum_source == 'ZIP' && zip_file_exists($ignore_file)
@@ -340,7 +340,7 @@ $ignore_list_regex			= implode('|', $ignore_list);
 $ignore_unexpected_regex	= implode('|', $ignore_unexpected_list);
 
 /*
-* Load and check the external exception list
+	Load and check the external exception list
 */
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $exceptions_file)
 	|| $checksum_source == 'ZIP' && zip_file_exists($exceptions_file)
@@ -388,7 +388,7 @@ if (isset($zip))
 }
 
 /*
-* Display: versions and number of checksums
+	Display: versions and number of checksums
 */
 $output .= sprintf('Version mode : %1$s', $checksum_version_mode) . EOL;
 $output .= sprintf('MD5 source   : %1$s (%2$s)', $checksum_source, implode(', ', $checksum_file_flags)) . EOL;
@@ -417,7 +417,7 @@ else
 }
 
 /*
-* Core-Check
+	Core-Check
 */
 $count_missing		= 0;
 $count_different	= 0;
@@ -504,53 +504,34 @@ foreach ($hash_list as $file => $hash_data)
 	}
 }
 
-// var_dump($package_folders);
-
 /*
-* Unexpected-Check
+	Unexpected-Check
 */
 $local_files			= [];
-$unexpected_files		= [];
-$result_unexpected_list	= [];
 foreach ($package_folders as $folder => $dummy)
 {
 	$folder = ($folder === '.') ? '' : $folder . '/';
 	$local_files = array_merge($local_files, array_filter(glob($folder . '{,.}*', GLOB_BRACE), 'is_file'));
-// var_dump($folder, $local_files);
 }
-// var_dump(count($local_files));
-$unexpected_files = array_diff($local_files, array_keys($hash_list));
-foreach ($unexpected_files as $key => $file)
+
+$result_unexpected_list	= [];
+foreach (array_diff($local_files, array_keys($hash_list)) as $key => $file)
 {
 	$hash_data = [
 		'hash_file_id'	=> 0,
 		'hash_line_num'	=> $key + 1,
 	];
 	$result_unexpected_list[] = result_struct($file, $hash_data, '! WARNING', 'is an unexpected file', $count_warning);
-	// var_dump($hash_data);
 }
 
-// var_dump($package_folders);
-// var_dump(array_keys($hash_list));
-// var_dump($local_files);
-// var_dump($unexpected_files);
-
-
 /*
-* Display: results
+	Format results and add to display buffer
 */
-if (IS_BROWSER)
-{
-	flush_buffer();
-}
-
-$output .= EOL . 'List of core files with anomalies:';
-$output .= format_results($result_core_list);
-$output .= EOL . 'List of unexpected files:';
-$output .= format_results($result_unexpected_list);
+$output .= EOL . format_results($result_core_list, 'List of core files with anomalies');
+$output .= EOL . format_results($result_unexpected_list, 'List of unexpected files');
 
 /*
-* Display: summary
+	Display: results and summary
 */
 $summary = '';
 if ($config['debug_mode'])
@@ -600,7 +581,7 @@ $output .= html_end();
 flush_buffer();
 
 /*
-* Script end
+	Script end
 */
 
 function result_struct(string &$file, array &$hash_data, string $msg_type, string $msg, int &$counter): array
@@ -617,7 +598,7 @@ function result_struct(string &$file, array &$hash_data, string $msg_type, strin
 	];
 };
 
-function format_results(array $result_list): string
+function format_results(array $result_list, string $result_title = ''): string
 {
 	if (count($result_list) > 0)
 	{
@@ -635,7 +616,7 @@ function format_results(array $result_list): string
 				/* 2 */ $row['hash_line_num'],
 				/* 3 */ $row['msg_type'],
 				/* 4 */ $row['file'],
-				/* 5 */ ($row['msg'] != '' ? ' ' . $row['msg'] : '')
+				/* 5 */ (($row['msg'] != '') ? ' ' . $row['msg'] : '')
 			) . EOL;
 		}
 	}
@@ -643,9 +624,10 @@ function format_results(array $result_list): string
 	{
 		$output = 'no issues found' . EOL ;
 	}
-	add_list_lines($output);
 
-	return $output;
+	add_list_lines($output, strlen($result_title));
+
+	return $result_title . (($result_title != '') ? EOL : '') . $output;
 }
 
 function is_ignored(string &$file, string &$ignore_list_regex): bool
@@ -720,7 +702,6 @@ function html_start(): string
 		}
 		.prevent-select {
 			-webkit-user-select: none;
-			-ms-user-select: none;
 			user-select: none;
 		}
 		#result-message {
@@ -917,10 +898,12 @@ function load_checksum_file(string $checksum_file, string $checksum_source, stri
 	}
 }
 
-function add_list_lines(string &$list): void
+function add_list_lines(string &$list, int $min_len = 0): void
 {
-	$list_separator = str_repeat('-', column_max_len($list));
-	$list = EOL . $list_separator . EOL . $list . $list_separator . EOL ;
+	$column_len = column_max_len($list);
+	$column_len = ($column_len < $min_len) ? $min_len : $column_len;
+	$list_separator = str_repeat('-', $column_len);
+	$list = $list_separator . EOL . $list . $list_separator . EOL ;
 }
 
 function column_max_len($list, string $column_name = ''): int
@@ -952,7 +935,7 @@ function zip_extract_to_array(string $file_name): ?array
 		$file_content_list = preg_split('/\n/', $file_content, -1, PREG_SPLIT_NO_EMPTY);
 	}
 
-	return $file_content_list !== false ? $file_content_list : null;
+	return ($file_content_list !== false) ? $file_content_list : null;
 }
 
 function curl_get_contents(string $url, array &$status): ?string
@@ -970,12 +953,12 @@ function curl_get_contents(string $url, array &$status): ?string
 	$status = curl_getinfo($curl_h) ?: [];
 	curl_close($curl_h);
 
-	return ($status['http_code'] ?? 0) == 200 && $content !== false ? $content : null;
+	return (($status['http_code'] ?? 0) == 200 && $content !== false) ? $content : null;
 }
 
 function socket_get_contents(string $host, string $directory, string $file, int $port, array &$status): ?string
 {
-	$socket_h = fsockopen(($port == 443 ? 'ssl://' : '') . $host, $port, $error_number, $error_string, 10);
+	$socket_h = fsockopen((($port == 443) ? 'ssl://' : '') . $host, $port, $error_number, $error_string, 10);
 	fwrite($socket_h, "GET {$directory}/{$file} HTTP/1.0\r\n");
 	fwrite($socket_h, "HOST: {$host}\r\n");
 	fwrite($socket_h, "Connection: close\r\n\r\n");
@@ -997,7 +980,7 @@ function socket_get_contents(string $host, string $directory, string $file, int 
 	}
 	fclose($socket_h);
 
-	return stripos($status[0] ?? '', '200 OK') !== false && $content != '' ? $content : null;
+	return (stripos($status[0] ?? '', '200 OK') !== false && $content != '') ? $content : null;
 }
 
 # phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames

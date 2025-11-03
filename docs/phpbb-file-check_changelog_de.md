@@ -1,19 +1,20 @@
 ### 1.5.0
-(WIP)
-* Aufgrund eines kürzlichen Support-Falles, bei dem der Versuch einer phpBB Installation zu einer Zeitüberschreitung und Migrationsfehler führte, wurde der Prüfumfang von FC erweitert. Ursache war eine Kopieraktion des Komplettpakets auf einem Mac System, bei der unerwünschte Metadateien erzeugt wurden, die dann mit hochgeladen wurden. Das hat dann im weiteren Verlauf den phpBB Migrator in schleudern gebracht, da dieser versucht hat, die vermeintlichen Migrationsdateien auszuführen. Ab dieser Version prüft FC deshalb nicht nur Existenz und Integrität des kompletten phpBB Kerns, sondern auch auf unerwartete Dateien. Das sind Dateien, die nicht zum offiziellen Komplettpaket gehören und eine Installation oder Update von phpBB verhindern können. Solche Dateien können ausserdem innerhalb des Template Systems für falsche/veraltete Anzeigen sorgen. Die Details:
-  * Im Anschluss des bisherigen Prüflaufs der auf Existenz und Integrität prüft, wird noch eine weitere, separate Prüfung ausgeführt, die darauf spezialisiert ist, unerwartete Dateien zu ermitteln. Das Ergebnis dieser neuen Prüfung wird dann in einer separaten, zweiten Liste angezeigt.
+(2025-11-03)
+* Aufgrund eines kürzlichen Support-Falles, bei dem der Versuch einer phpBB Installation zu einer Zeitüberschreitung und Migrationsfehler führte, wurde der Prüfumfang von FC erweitert. Ursache war eine Kopieraktion des Komplettpakets auf einem Mac System, bei der unerwünschte Metadateien erzeugt wurden, die dann mit hochgeladen wurden. Das hatte dann im weiteren Verlauf Funktionsstörungen beim phpBB Migrator zur Folge, da dieser versucht hat, die vermeintlichen Migrationsdateien auszuführen. Ab dieser Version prüft FC deshalb nicht nur Existenz und Integrität des kompletten phpBB Kerns, sondern auch auf unerwartete Dateien. Das sind Dateien, die nicht zum offiziellen Komplettpaket gehören und eine Installation oder Update von phpBB verhindern können. Solche Dateien können ausserdem innerhalb des Template Systems für falsche/veraltete Anzeigen sorgen. Die Details dieser neuen Funktion:
+  * Im Anschluss des bisherigen Prüflaufs, der auf Existenz und Integrität prüft, wird noch eine weitere, separate Prüfung ausgeführt, die darauf spezialisiert ist, unerwartete Dateien zu ermitteln. Das Ergebnis dieser neuen Prüfung wird dann in einer separaten, zweiten Liste angezeigt.
   * Da es im Bericht nun zwei Listen gibt, haben diese entsprechende Überschriften bekommen:
-    * "List of core files with anomalies:"  
-	* "List of unexpected files:"
-  * Folgende Ordner werden von der neuen Prüfung ignoriert, da diese traditionell viele individuelle Dateien enthalten:
+    * "List of core files with anomalies"  
+	* "List of unexpected files"
+  * Folgende Ordner werden von der neuen Prüfung per Standard ignoriert, da diese traditionell viele individuelle Dateien enthalten:
     * `{root}/`
 	* `{root}/cache/`
 	* `{root}/ext/`
 	* `{root}/files/`
 	* `{root}/images/`
 	* `{root}/store/`
-  * Die neue Prüfung verlängert die Laufzeit von FC deutlich, etwa um den Faktor 2-3. Ob das aber auch spürbar ist, hängt stark vom Web-Server ab; wie potent dieser ist und welche Dateien von phpBB sich gerade noch im Cache des Web-Servers befinden.
-* Im Bericht sind die Zeilen "Warnings:" und "Different files:" jetzt vertauscht positioniert.
+  * Die neue Prüfung verlängert die Laufzeit von FC deutlich, etwa um den Faktor 2-3. Ob das aber auch spürbar ist, hängt stark vom Web-Server ab; wie leistungsfähig dieser ist und welche Dateien von phpBB sich gerade im Server-Cache befinden.
+* Im Bericht sind in der Zusammenfassung die Zeilen "Warnings:" und "Different files:" jetzt vertauscht positioniert.
+* Code Optimierung.
 
 ### 1.4.6
 (2025-03-30)
