@@ -1,3 +1,12 @@
+### 1.5.1-b1
+* Exception-Check:
+  * Laufzeit optimiert; dadurch benötigt die Funktion zwar etwas mehr RAM, läuft aber circa 30% schneller.
+  * Meldungen haben jetzt ihren eigenen Meldung-Typ: `! UNEXPECTED`, anstatt `! WARNING`.
+  * Somit ist der Hinweis "is an unexpected file" nicht länger nötig und wurde entfernt.
+  * In der Zusammenfassung werden jetzt unerwartete Dateien separat gezählt: `Unexpected files:`.
+  * Bei den Skript-Informationen werden jetzt auch die Laufzeiten von Core-Check und Unexpected-Check separat angezeigt.
+* Code Optimierung.
+
 ### 1.5.0
 * Release (2025-11-03)
 * Code Optimierung.

@@ -37,7 +37,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.0';
+$ver					= '1.5.1-b1';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -259,6 +259,7 @@ $checksum_ver		= '';
 $checksum_diff_name	= '';
 $checksum_diff_ver	= '';
 $hash_list			= [];
+
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_file)
 	|| $checksum_source == 'ZIP' && zip_file_exists($checksum_file)
 )
@@ -336,6 +337,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
 	}
 	$checksum_file_flags[] = 'I';
 }
+
 $ignore_list_regex			= implode('|', $ignore_list);
 $ignore_unexpected_regex	= implode('|', $ignore_unexpected_list);
 
@@ -417,7 +419,7 @@ else
 }
 
 /*
-	Core-Check
+	Core-check
 */
 $count_missing		= 0;
 $count_different	= 0;
@@ -428,22 +430,24 @@ $count_ignored		= 0;
 $count_exceptions	= 0;
 $count_checked		= 0;
 $result_core_list	= [];
-$package_folders	= [];
+// $package_folders	= [];
+$start_time_core	= microtime(true);
+
 foreach ($hash_list as $file => $hash_data)
 {
-	$dirname = dirname($file);
-	if (!is_ignored($dirname, $ignore_unexpected_regex) && !array_key_exists($dirname, $package_folders))
-	{
-		$package_folders[$dirname] = '';
-		while (strpos($dirname, '/') !== false)
-		{
-			$dirname = dirname($dirname);
-			if (!array_key_exists($dirname, $package_folders))
-			{
-				$package_folders[$dirname] = '';
-			}
-		}
-	}
+	// $dirname = dirname($file);
+	// if (!is_ignored($dirname, $ignore_unexpected_regex) && !array_key_exists($dirname, $package_folders))
+	// {
+		// $package_folders[$dirname] = '';
+		// while (strpos($dirname, '/') !== false)
+		// {
+			// $dirname = dirname($dirname);
+			// if (!array_key_exists($dirname, $package_folders))
+			// {
+				// $package_folders[$dirname] = '';
+			// }
+		// }
+	// }
 
 	$is_ignored = is_ignored($file, $ignore_list_regex);
 	if ($is_ignored || is_exception($file, $exception_list))
@@ -504,25 +508,59 @@ foreach ($hash_list as $file => $hash_data)
 	}
 }
 
+$runtime_core = microtime(true) - $start_time_core;
+
 /*
-	Unexpected-Check
+	Unexpected-check
 */
+$count_unexpected		= 0;
+$package_folders		= [];
 $local_files			= [];
-foreach ($package_folders as $folder => $dummy)
+$local_files_diff		= [];
+$result_unexpected_list	= [];
+$start_time_unexpected	= microtime(true);
+
+foreach ($hash_list as $file => $unused)
+{
+	$dirname = dirname($file);
+	if (!array_key_exists($dirname, $package_folders) && !is_ignored($dirname, $ignore_unexpected_regex))
+	{
+		$package_folders[$dirname] = '';
+		while (strpos($dirname, '/') !== false)
+		{
+			$dirname = dirname($dirname);
+			if (!array_key_exists($dirname, $package_folders))
+			{
+				$package_folders[$dirname] = '';
+			}
+		}
+	}
+}
+// var_dump(microtime(true) - $start_time_unexpected);
+
+foreach ($package_folders as $folder => $unused)
 {
 	$folder = ($folder === '.') ? '' : $folder . '/';
-	$local_files = array_merge($local_files, array_filter(glob($folder . '{,.}*', GLOB_BRACE), 'is_file'));
+	// $local_files = array_merge($local_files, array_filter(glob($folder . '{,.}*', GLOB_BRACE), 'is_file'));
+	$local_files = array_merge($local_files, glob($folder . '{,.}*', GLOB_BRACE));
 }
+// var_dump(count($local_files));
+$local_files_diff = array_diff($local_files, array_keys($hash_list));
+// var_dump(count($local_files_diff));
+// $local_files = array_filter($local_files, 'is_file');
+// var_dump(count($local_files));
 
-$result_unexpected_list	= [];
-foreach (array_diff($local_files, array_keys($hash_list)) as $key => $file)
+// foreach (array_diff($local_files, array_keys($hash_list)) as $key => $file)
+foreach (array_filter($local_files_diff, 'is_file') as $key => $file)
 {
 	$hash_data = [
 		'hash_file_id'	=> 0,
 		'hash_line_num'	=> $key + 1,
 	];
-	$result_unexpected_list[] = result_struct($file, $hash_data, '! WARNING', 'is an unexpected file', $count_warning);
+	$result_unexpected_list[] = result_struct($file, $hash_data, '! UNEXPECTED', '', $count_unexpected);
 }
+
+$runtime_unexpected = microtime(true) - $start_time_unexpected;
 
 /*
 	Format results and add to display buffer
@@ -536,30 +574,31 @@ $output .= EOL . format_results($result_unexpected_list, 'List of unexpected fil
 $summary = '';
 if ($config['debug_mode'])
 {
-	$summary .=	sprintf('Ignored        : % ' . $checksums_count_len . 'u', $count_ignored) . EOL;
-	$summary .=	sprintf('Exceptions     : % ' . $checksums_count_len . 'u', $count_exceptions) . EOL;
+	$summary .=	sprintf('Ignored         : % ' . $checksums_count_len . 'u', $count_ignored) . EOL;
+	$summary .=	sprintf('Exceptions      : % ' . $checksums_count_len . 'u', $count_exceptions) . EOL;
 }
-$summary .=		sprintf('Checked files  : % ' . $checksums_count_len . 'u', $count_checked) . EOL;
-$summary .=		sprintf('Missing files  : % ' . $checksums_count_len . 'u', $count_missing) . EOL;
-$summary .=		sprintf('Different files: % ' . $checksums_count_len . 'u', $count_different) . EOL;
+$summary .=		sprintf('Checked files   : % ' . $checksums_count_len . 'u', $count_checked) . EOL;
+$summary .=		sprintf('Missing files   : % ' . $checksums_count_len . 'u', $count_missing) . EOL;
+$summary .=		sprintf('Different files : % ' . $checksums_count_len . 'u', $count_different) . EOL;
+$summary .=		sprintf('Unexpected files: % ' . $checksums_count_len . 'u', $count_unexpected) . EOL;
 if ($count_warning || $config['debug_mode'])
 {
-	$summary .=	sprintf('Warnings       : % ' . $checksums_count_len . 'u', $count_warning) . EOL;
+	$summary .=	sprintf('Warnings        : % ' . $checksums_count_len . 'u', $count_warning) . EOL;
 }
 if ($count_notice || $config['debug_mode'])
 {
-	$summary .=	sprintf('Notices        : % ' . $checksums_count_len . 'u', $count_notice) . EOL;
+	$summary .=	sprintf('Notices         : % ' . $checksums_count_len . 'u', $count_notice) . EOL;
 }
 if ($count_error || $config['debug_mode'])
 {
-	$summary .=	sprintf('FC Errors      : % ' . $checksums_count_len . 'u', $count_error) . EOL;
+	$summary .=	sprintf('FC Errors       : % ' . $checksums_count_len . 'u', $count_error) . EOL;
 }
 
 $service_list = array_map(function (string $key, int $value) {
 	return "$key:$value";
 }, array_keys($service), array_values($service));
 
-$exec_info =	sprintf('Run time          : %.3f seconds', microtime(true) - $start_time) . EOL;
+$exec_info =	sprintf('Run time          : %.3f seconds (Core-check: %.3f, Unexpected-check: %.3f)', microtime(true) - $start_time, $runtime_core, $runtime_unexpected) . EOL;
 $exec_info .=	sprintf('Max execution time: %u seconds', ini_get('max_execution_time')) . EOL;
 $exec_info .=	sprintf('Memory peak usage : %s bytes', number_format(memory_get_peak_usage())) . EOL;
 $exec_info .=	sprintf('Memory limit      : %s', ini_get('memory_limit')) . EOL;

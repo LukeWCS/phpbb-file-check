@@ -1,3 +1,6 @@
+### 1.5.1
+(WIP)
+
 ### 1.5.0
 (2025-11-03)
 * Aufgrund eines kürzlichen Support-Falles, bei dem eine phpBB Installation zu einer Zeitüberschreitung und Migrationsfehler führte, wurde der Prüfumfang von FC erweitert. Ursache war eine Kopieraktion des Komplettpakets auf einem Mac System, bei der unerwünschte Metadateien erzeugt wurden, die dann mit hochgeladen wurden. Das hatte im weiteren Verlauf Funktionsstörungen beim phpBB Migrator zur Folge, da dieser versucht hat, die vermeintlichen Migrationsdateien auszuführen. Ab dieser Version prüft FC deshalb zusätzlich auf unerwartete Dateien, die nicht zum offiziellen Komplettpaket gehören und eine Installation oder Update von phpBB verhindern können. Solche Dateien können ausserdem innerhalb des Template Systems für falsche/veraltete Anzeigen sorgen. 
