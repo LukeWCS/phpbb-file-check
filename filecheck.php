@@ -11,7 +11,7 @@
 */
 
 # phpcs:disable PSR1.Files.SideEffects
-# phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames messages
+# phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames messages output
 
 /*
 	Initialization
@@ -37,7 +37,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.1-b1';
+$ver					= '1.5.1';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -430,25 +430,10 @@ $count_ignored		= 0;
 $count_exceptions	= 0;
 $count_checked		= 0;
 $result_core_list	= [];
-// $package_folders	= [];
 $start_time_core	= microtime(true);
 
 foreach ($hash_list as $file => $hash_data)
 {
-	// $dirname = dirname($file);
-	// if (!is_ignored($dirname, $ignore_unexpected_regex) && !array_key_exists($dirname, $package_folders))
-	// {
-		// $package_folders[$dirname] = '';
-		// while (strpos($dirname, '/') !== false)
-		// {
-			// $dirname = dirname($dirname);
-			// if (!array_key_exists($dirname, $package_folders))
-			// {
-				// $package_folders[$dirname] = '';
-			// }
-		// }
-	// }
-
 	$is_ignored = is_ignored($file, $ignore_list_regex);
 	if ($is_ignored || is_exception($file, $exception_list))
 	{
@@ -520,7 +505,7 @@ $local_files_diff		= [];
 $result_unexpected_list	= [];
 $start_time_unexpected	= microtime(true);
 
-foreach ($hash_list as $file => $unused)
+foreach ($hash_list as $file => $_)
 {
 	$dirname = dirname($file);
 	if (!array_key_exists($dirname, $package_folders) && !is_ignored($dirname, $ignore_unexpected_regex))
@@ -529,29 +514,27 @@ foreach ($hash_list as $file => $unused)
 		while (strpos($dirname, '/') !== false)
 		{
 			$dirname = dirname($dirname);
-			if (!array_key_exists($dirname, $package_folders))
+			if (array_key_exists($dirname, $package_folders))
 			{
-				$package_folders[$dirname] = '';
+				break;
 			}
+			$package_folders[$dirname] = '';
 		}
 	}
 }
-// var_dump(microtime(true) - $start_time_unexpected);
 
-foreach ($package_folders as $folder => $unused)
+foreach ($package_folders as $folder => $_)
 {
 	$folder = ($folder === '.') ? '' : $folder . '/';
-	// $local_files = array_merge($local_files, array_filter(glob($folder . '{,.}*', GLOB_BRACE), 'is_file'));
 	$local_files = array_merge($local_files, glob($folder . '{,.}*', GLOB_BRACE));
 }
-// var_dump(count($local_files));
-$local_files_diff = array_diff($local_files, array_keys($hash_list));
-// var_dump(count($local_files_diff));
-// $local_files = array_filter($local_files, 'is_file');
-// var_dump(count($local_files));
 
-// foreach (array_diff($local_files, array_keys($hash_list)) as $key => $file)
-foreach (array_filter($local_files_diff, 'is_file') as $key => $file)
+$local_files_diff = array_diff($local_files, array_keys($hash_list));
+$local_files_diff = array_filter($local_files_diff, function (string $file) {
+	return !preg_match('/(?:^|\/)\.{1,2}$/', $file) && is_file($file);
+});
+
+foreach ($local_files_diff as $key => $file)
 {
 	$hash_data = [
 		'hash_file_id'	=> 0,

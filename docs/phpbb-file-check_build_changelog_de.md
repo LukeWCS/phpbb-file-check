@@ -1,3 +1,7 @@
+### 1.5.1
+* Release (2025-11-08)
+* Laufzeit bei Exception-Check weiter optimiert; jetzt bis circa 35% schneller.
+
 ### 1.5.1-b1
 * Exception-Check:
   * Laufzeit optimiert; dadurch benötigt die Funktion zwar etwas mehr RAM, läuft aber circa 30% schneller.

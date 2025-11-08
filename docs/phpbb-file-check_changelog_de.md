@@ -1,5 +1,12 @@
 ### 1.5.1
-(WIP)
+(2025-11-08)
+* Prüfung auf unerwartete Dateien:
+  * Meldungen haben jetzt ihren eigenen Meldungs-Typ: `! UNEXPECTED`, anstatt dem allgemeinen `! WARNING`.
+  * Somit ist der Zusatz "is an unexpected file" bei jeder Meldung nicht länger nötig und wurde entfernt.
+  * In der Zusammenfassung werden jetzt unerwartete Dateien separat gezählt: `Unexpected files:`.
+  * Bei den Skript-Informationen werden jetzt auch die Laufzeiten von Core-check und Unexpected-check separat angezeigt.
+  * Laufzeit optimiert; dadurch benötigt die Funktion etwas mehr RAM, kann aber bis zu 35% schneller arbeiten, da effizienterer Code.
+  * Ein Teil des Codes von Unexpected-check befand sich noch innerhalb des Core-check und wurde jetzt verschoben, wodurch beide Funktionen vollständig separat arbeiten.
 
 ### 1.5.0
 (2025-11-03)
