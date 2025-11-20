@@ -1,3 +1,6 @@
+### 1.5.2
+* Release (2025-11-20)
+
 ### 1.5.1
 * Release (2025-11-08)
 * Laufzeit bei Exception-Check weiter optimiert; jetzt bis circa 35% schneller.

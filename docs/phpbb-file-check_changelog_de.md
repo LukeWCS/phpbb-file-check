@@ -1,3 +1,9 @@
+### 1.5.2
+(2025-11-20)
+* Anpassung und Freigabe für PHP 8.5.
+* Bei verschiedenen Funktionen mehrere unnötige Variablen-Referenzen bei Funktionsparametern entfernt.
+* Konsequentere Benennung verschiedener Variablen bei Core-check und Unexpected-check.
+
 ### 1.5.1
 (2025-11-08)
 * Prüfung auf unerwartete Dateien:

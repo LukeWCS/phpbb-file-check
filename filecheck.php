@@ -6,7 +6,7 @@
 * @copyright (c) 2023 LukeWCS <phpBB.de>
 * @license GNU General Public License, version 2 (GPL-2.0-only)
 *
-* PHP requirements: 7.1.0 - 8.4.x
+* PHP requirements: 7.1.0 - 8.5.x
 *
 */
 
@@ -37,7 +37,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.1';
+$ver					= '1.5.2';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -51,16 +51,16 @@ $checksum_version_mode	= 'Manually';
 $checksum_file_flags	= [];
 $config					= [];
 $messages				= '';
-$ignore_list			= [
+$core_ignore_list		= [
 	'^\.git',
 	'\/\.git',
 ];
-$exception_list			= [
+$core_exception_list	= [
 	'docs/',
 	'ext/phpbb/viglink/',
 	'install/',
 ];
-$ignore_unexpected_list	= [
+$unexpected_ignore_list	= [
 	'^\.$',
 	'^cache',
 	'^ext',
@@ -329,7 +329,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
 			add_list_lines($error_messages);
 			terminate("Ignore list [{$ignore_file}] has the following issues:" . EOL . $error_messages);
 		}
-		$ignore_list = array_merge($ignore_list, $import_list);
+		$core_ignore_list = array_merge($core_ignore_list, $import_list);
 	}
 	else
 	{
@@ -338,8 +338,8 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
 	$checksum_file_flags[] = 'I';
 }
 
-$ignore_list_regex			= implode('|', $ignore_list);
-$ignore_unexpected_regex	= implode('|', $ignore_unexpected_list);
+$core_ignore_regex			= implode('|', $core_ignore_list);
+$unexpected_ignore_regex	= implode('|', $unexpected_ignore_list);
 
 /*
 	Load and check the external exception list
@@ -374,8 +374,8 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $exceptions_file)
 			add_list_lines($error_messages);
 			terminate("Exception list [{$exceptions_file}] has the following issues:" . EOL . $error_messages);
 		}
-		$exception_list = array_merge($exception_list, $import_list);
-		sort($exception_list);
+		$core_exception_list = array_merge($core_exception_list, $import_list);
+		sort($core_exception_list);
 	}
 	else
 	{
@@ -434,8 +434,8 @@ $start_time_core	= microtime(true);
 
 foreach ($hash_list as $file => $hash_data)
 {
-	$is_ignored = is_ignored($file, $ignore_list_regex);
-	if ($is_ignored || is_exception($file, $exception_list))
+	$is_ignored = is_ignored($file, $core_ignore_regex);
+	if ($is_ignored || is_exception($file, $core_exception_list))
 	{
 		if ($config['debug_mode'])
 		{
@@ -508,7 +508,7 @@ $start_time_unexpected	= microtime(true);
 foreach ($hash_list as $file => $_)
 {
 	$dirname = dirname($file);
-	if (!array_key_exists($dirname, $package_folders) && !is_ignored($dirname, $ignore_unexpected_regex))
+	if (!array_key_exists($dirname, $package_folders) && !is_ignored($dirname, $unexpected_ignore_regex))
 	{
 		$package_folders[$dirname] = '';
 		while (strpos($dirname, '/') !== false)
@@ -606,7 +606,7 @@ flush_buffer();
 	Script end
 */
 
-function result_struct(string &$file, array &$hash_data, string $msg_type, string $msg, int &$counter): array
+function result_struct(string $file, array $hash_data, string $msg_type, string $msg, int &$counter): array
 {
 	$counter++;
 
@@ -652,9 +652,9 @@ function format_results(array $result_list, string $result_title = ''): string
 	return $result_title . (($result_title != '') ? EOL : '') . $output;
 }
 
-function is_ignored(string &$file, string &$ignore_list_regex): bool
+function is_ignored(string $file, string $ignore_regex): bool
 {
-	if ($ignore_list_regex === '' || preg_match('/' . $ignore_list_regex . '/', $file) !== 1)
+	if ($ignore_regex === '' || preg_match('/' . $ignore_regex . '/', $file) !== 1)
 	{
 		return false;
 	}
@@ -662,7 +662,7 @@ function is_ignored(string &$file, string &$ignore_list_regex): bool
 	return true;
 }
 
-function is_exception(string &$file, array &$exception_list): bool
+function is_exception(string $file, array $exception_list): bool
 {
 	foreach ($exception_list as $exception)
 	{
@@ -973,7 +973,6 @@ function curl_get_contents(string $url, array &$status): ?string
 	]);
 	$content = curl_exec($curl_h);
 	$status = curl_getinfo($curl_h) ?: [];
-	curl_close($curl_h);
 
 	return (($status['http_code'] ?? 0) == 200 && $content !== false) ? $content : null;
 }
