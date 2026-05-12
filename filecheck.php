@@ -16,7 +16,8 @@
 /*
 	Initialization
 */
-define('IS_BROWSER', ($_SERVER['HTTP_USER_AGENT'] ?? '') != '');
+define('IS_BROWSER'		, ($_SERVER['HTTP_USER_AGENT'] ?? '') != '');
+define('SERVER_SOFTWARE', trim(preg_replace('/.*?([a-zA-Z _\-]+).*/', '$1', $_SERVER['SERVER_SOFTWARE'] ?? '')) ?: null);
 
 const EOL				= "\n";
 const VALID_CHARS		= 'a-zA-Z0-9\/\-_.';
@@ -37,7 +38,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.2';
+$ver					= '1.5.3';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -67,6 +68,10 @@ $unexpected_ignore_list	= [
 	'^files',
 	'^images',
 	'^store',
+];
+$unexpected_temp_list	= [
+	'store/install_config.php',
+	'store/io_lock.lock',
 ];
 $start_time				= microtime(true);
 $output					= html_start();
@@ -397,7 +402,8 @@ $output .= sprintf('MD5 source   : %1$s (%2$s)', $checksum_source, implode(', ',
 $output .= sprintf('phpBB Version: %1$s', $phpbb_version ?? 'Unknown') . EOL;
 $output .= sprintf('MD5 Version 1: %1$s (%2$s)', $checksum_ver, $checksum_name) . EOL;
 $output .= sprintf('MD5 Version 2: ' . ($checksum_diff_ver ? '%1$s (%2$s)' : '-'), $checksum_diff_ver, $checksum_diff_name) . EOL;
-$output .= sprintf('PHP Version  : %1$s (%2$s)', PHP_VERSION, PHP_OS) . EOL;
+$output .= sprintf('PHP Version  : %1$u.%2$u (%3$s)', PHP_MAJOR_VERSION, PHP_MINOR_VERSION, PHP_OS) . EOL;
+$output .= sprintf('Server       : %1$s', SERVER_SOFTWARE ?? (IS_BROWSER ? 'Unknown' : 'cli')) . EOL;
 $output .= EOL;
 $output .= 'Please wait, ' . $count_checksums . ' checksums are being processed...' . EOL;
 
@@ -503,6 +509,7 @@ $package_folders		= [];
 $local_files			= [];
 $local_files_diff		= [];
 $result_unexpected_list	= [];
+$hash_data_zero			= ['hash_file_id' => 0, 'hash_line_num' => 0];
 $start_time_unexpected	= microtime(true);
 
 foreach ($hash_list as $file => $_)
@@ -534,13 +541,17 @@ $local_files_diff = array_filter($local_files_diff, function (string $file) {
 	return !preg_match('/(?:^|\/)\.{1,2}$/', $file) && is_file($file);
 });
 
-foreach ($local_files_diff as $key => $file)
+foreach ($local_files_diff as $file)
 {
-	$hash_data = [
-		'hash_file_id'	=> 0,
-		'hash_line_num'	=> $key + 1,
-	];
-	$result_unexpected_list[] = result_struct($file, $hash_data, '! UNEXPECTED', '', $count_unexpected);
+	$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! UNEXPECTED', '(size: ' . @filesize($file) . ' bytes)', $count_unexpected);
+}
+
+foreach ($unexpected_temp_list as $file)
+{
+	if (file_exists($file))
+	{
+		$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! TEMPORARY', '(size: ' . @filesize($file) . ' bytes)', $count_unexpected);
+	}
 }
 
 $runtime_unexpected = microtime(true) - $start_time_unexpected;

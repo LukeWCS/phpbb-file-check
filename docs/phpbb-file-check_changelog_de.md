@@ -1,11 +1,24 @@
+### 1.5.3
+(2026-05-12)
+
+* In der Einleitung des Berichts wird jetzt unter "Server:" auch die Server Software angezeigt. Aus Sicherheitsgründen werden dabei alle erweiterten Informationen wie die Version herausgefiltert und nur der Name der Server Software angezeigt, also z.B. "Apache", "nginx" und so weiter. Wurde FC in der Shell ausgeführt, wird "cli" angezeigt.
+* Aus Sicherheitsgründen wird die PHP Version nur noch als Major.Minor angezeigt, jedoch nicht mehr als Major.Minor.Release.
+* Änderungen bei der Prüfung auf unerwartete Dateien:
+  * Aufgrund eines kürzlichen Support-Falles, bei dem ein Update mittels Komplettpaket nicht durchgeführt werden konnte, weil sich phpBB noch den abgebrochenen Zustand eines früheren Update-Versuches mittels Erweitertem Updater gemerkt hat, wird jetzt auch auf Existenz von 2 besonderen temporären Dateien geprüft: `store/install_config.php` und `store/io_lock.lock`. Sind diese Dateien vorhanden, werden sie als unerwartete Dateien gemeldet, mit dem Meldungs-Typ `! TEMPORARY`.
+  * Da die Ergebnisse mit derselben Funktion aufbereitet werden wie für die Kern-Prüfung, werden zwangsläufig auch die Angaben zur Prüfsummen-Datei in geschweiften Klammern angezeigt. Da es solche Daten bei unerwarteten Dateien jedoch nicht gibt, wurde das bisher einfach als `{0:<listenindex>}` angezeigt, also die Position in der Liste der ermittelten lokalen Dateien. Da dieser Listenindex aber keinerlei Nutzen hat und somit sinnfrei ist, werden die Ergebnisse jetzt immer mit einem statischen `{0:0}` gelistet.
+  * Es wird jetzt auch die Dateigrösse in Bytes ermittelt und angezeigt. Das kann speziell bei temporären Dateien zusätzliche Informationen liefern.
+* Code Optimierung.
+
 ### 1.5.2
 (2025-11-20)
+
 * Anpassung und Freigabe für PHP 8.5.
 * Bei verschiedenen Funktionen mehrere unnötige Variablen-Referenzen bei Funktionsparametern entfernt.
 * Konsequentere Benennung verschiedener Variablen bei Core-check und Unexpected-check.
 
 ### 1.5.1
 (2025-11-08)
+
 * Prüfung auf unerwartete Dateien:
   * Meldungen haben jetzt ihren eigenen Meldungs-Typ: `! UNEXPECTED`, anstatt dem allgemeinen `! WARNING`.
   * Somit ist der Zusatz "is an unexpected file" bei jeder Meldung nicht länger nötig und wurde entfernt.
@@ -16,6 +29,7 @@
 
 ### 1.5.0
 (2025-11-03)
+
 * Aufgrund eines kürzlichen Support-Falles, bei dem eine phpBB Installation zu einer Zeitüberschreitung und Migrationsfehler führte, wurde der Prüfumfang von FC erweitert. Ursache war eine Kopieraktion des Komplettpakets auf einem Mac System, bei der unerwünschte Metadateien erzeugt wurden, die dann mit hochgeladen wurden. Das hatte im weiteren Verlauf Funktionsstörungen beim phpBB Migrator zur Folge, da dieser versucht hat, die vermeintlichen Migrationsdateien auszuführen. Ab dieser Version prüft FC deshalb zusätzlich auf unerwartete Dateien, die nicht zum offiziellen Komplettpaket gehören und eine Installation oder Update von phpBB verhindern können. Solche Dateien können ausserdem innerhalb des Template Systems für falsche/veraltete Anzeigen sorgen. 
   * Im Anschluss der bisherigen Prüfung auf Existenz und Integrität, wird eine Prüfung auf unerwartete Dateien ausgeführt. Das Ergebnis dieser neuen Prüfung wird dann in einer separaten, zweiten Liste angezeigt.
   * Da es im Bericht nun zwei Listen gibt, haben diese entsprechende Überschriften bekommen:
