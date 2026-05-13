@@ -17,7 +17,7 @@
 	Initialization
 */
 define('IS_BROWSER'		, ($_SERVER['HTTP_USER_AGENT'] ?? '') != '');
-define('SERVER_SOFTWARE', trim(preg_replace('/.*?([a-zA-Z _\-]+).*/', '$1', $_SERVER['SERVER_SOFTWARE'] ?? '')) ?: null);
+define('SERVER_SOFTWARE', trim(preg_replace('/.*?([a-zA-Z][a-zA-Z_\-]+).*/', '$1', $_SERVER['SERVER_SOFTWARE'] ?? '')) ?: null);
 
 const EOL				= "\n";
 const VALID_CHARS		= 'a-zA-Z0-9\/\-_.';
@@ -38,7 +38,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.3';
+$ver					= '1.5.4';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -543,14 +543,16 @@ $local_files_diff = array_filter($local_files_diff, function (string $file) {
 
 foreach ($local_files_diff as $file)
 {
-	$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! UNEXPECTED', '(size: ' . @filesize($file) . ' bytes)', $count_unexpected);
+	$file_size = (($tmp_size = @filesize($file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
+	$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! UNEXPECTED', '(size: ' . $file_size . ')', $count_unexpected);
 }
 
 foreach ($unexpected_temp_list as $file)
 {
 	if (file_exists($file))
 	{
-		$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! TEMPORARY', '(size: ' . @filesize($file) . ' bytes)', $count_unexpected);
+		$file_size = (($tmp_size = @filesize($file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
+		$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! TEMPORARY', '(size: ' . $file_size . ')', $count_unexpected);
 	}
 }
 

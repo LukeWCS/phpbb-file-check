@@ -1,7 +1,13 @@
+### 1.5.4
+(2026-05-13)
+
+* Fix: Bei der Anzeige von "Server:" hatte die Bereinigung der Server-Software-Informationen mittels RegEx nicht alle Situationen berücksichtigt.
+* Bei unerwarteten Dateien wird die Dateigrösse (in Bytes) jetzt ebenfalls wie der Speicherbedarf (in Bytes) als formatierte Zahl ausgegeben, also mit einem Komma an den Tausender-Stellen.
+
 ### 1.5.3
 (2026-05-12)
 
-* In der Einleitung des Berichts wird jetzt unter "Server:" auch die Server Software angezeigt. Aus Sicherheitsgründen werden dabei alle erweiterten Informationen wie die Version herausgefiltert und nur der Name der Server Software angezeigt, also z.B. "Apache", "nginx" und so weiter. Wurde FC in der Shell ausgeführt, wird "cli" angezeigt.
+* In der Einleitung des Berichts wird jetzt unter "Server:" auch die Server-Software angezeigt. Aus Sicherheitsgründen werden dabei alle erweiterten Informationen wie die Server-Version oder Angaben zu PHP und anderen Modulen herausgefiltert und nur der Name der Server-Software angezeigt, also z.B. "Apache", "nginx", "Microsoft-IIS" und so weiter. Wurde FC in der Shell ausgeführt, wird "cli" angezeigt.
 * Aus Sicherheitsgründen wird die PHP Version nur noch als Major.Minor angezeigt, jedoch nicht mehr als Major.Minor.Release.
 * Änderungen bei der Prüfung auf unerwartete Dateien:
   * Aufgrund eines kürzlichen Support-Falles, bei dem ein Update mittels Komplettpaket nicht durchgeführt werden konnte, weil sich phpBB noch den abgebrochenen Zustand eines früheren Update-Versuches mittels Erweitertem Updater gemerkt hat, wird jetzt auch auf Existenz von 2 besonderen temporären Dateien geprüft: `store/install_config.php` und `store/io_lock.lock`. Sind diese Dateien vorhanden, werden sie als unerwartete Dateien gemeldet, mit dem Meldungs-Typ `! TEMPORARY`.
