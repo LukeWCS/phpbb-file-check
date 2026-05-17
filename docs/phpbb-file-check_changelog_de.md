@@ -1,3 +1,10 @@
+### 1.5.5
+(2026-05-17)
+
+* Fix: Wenn bei Ausführung in der Shell das aktuelle Verzeichnis, von dem aus FC gestartet wurde, nicht dem phpBB-Wurzelverzeichnis entsprach, dann wurde die Unerwartet-Prüfung nicht korrekt ausgeführt, wodurch entweder keine unerwarteten Dateien gemeldet wurden, oder unpassende (false-positive). Der Fehler lag darin, nicht konsequent das absolute phpBB-Wurzelverzeichnis anzusprechen, sondern das relative aktuelle.
+* Unerwartet-Prüfung geringfügig weiter optimiert in Bezug auf Effizienz und Laufzeit.
+* Code weiter strikter gestaltet.
+
 ### 1.5.4
 (2026-05-13)
 
@@ -20,7 +27,7 @@
 
 * Anpassung und Freigabe für PHP 8.5.
 * Bei verschiedenen Funktionen mehrere unnötige Variablen-Referenzen bei Funktionsparametern entfernt.
-* Konsequentere Benennung verschiedener Variablen bei Core-check und Unexpected-check.
+* Konsequentere Benennung verschiedener Variablen bei Kern-Prüfung und Unerwartet-Prüfung.
 
 ### 1.5.1
 (2025-11-08)
@@ -29,9 +36,9 @@
   * Meldungen haben jetzt ihren eigenen Meldungs-Typ: `! UNEXPECTED`, anstatt dem allgemeinen `! WARNING`.
   * Somit ist der Zusatz "is an unexpected file" bei jeder Meldung nicht länger nötig und wurde entfernt.
   * In der Zusammenfassung werden jetzt unerwartete Dateien separat gezählt: `Unexpected files:`.
-  * Bei den Skript-Informationen werden jetzt auch die Laufzeiten von Core-check und Unexpected-check separat angezeigt.
+  * Bei den Skript-Informationen werden jetzt auch die Laufzeiten von Kern-Prüfung und Unerwartet-Prüfung separat angezeigt.
   * Laufzeit optimiert; dadurch benötigt die Funktion etwas mehr RAM, kann aber bis zu 35% schneller arbeiten, da effizienterer Code.
-  * Ein Teil des Codes von Unexpected-check befand sich noch innerhalb des Core-check und wurde jetzt verschoben, wodurch beide Funktionen vollständig separat arbeiten.
+  * Ein Teil des Codes von Unerwartet-Prüfung befand sich noch innerhalb des Kern-Prüfung und wurde jetzt verschoben, wodurch beide Funktionen vollständig separat arbeiten.
 
 ### 1.5.0
 (2025-11-03)
@@ -100,7 +107,7 @@
 * Fehlerbehandlung bezüglich Prüfsummen-Paket weiter ausgebaut und auch zusätzliche Hinweise hinzugefügt:
   * Wenn cURL nicht verfügbar ist.
   * Wenn Sockets nicht verfügbar ist.
-  * Wenn das Prüfsummen-Paket im phpBB Root nicht gefunden wurde.
+  * Wenn das Prüfsummen-Paket im phpBB-Wurzelverzeichnis nicht gefunden wurde.
   * Wenn die übertragenen Daten keinen korrekten ZIP Header enthalten.
 * Die Dienste und ihre Zustände bezüglich Handhabung des Prüfsummen-Pakets werden jetzt explizit im Bericht am Ende bei den Skript/PHP Informationen gelistet.
 * Code Optimierung.
@@ -108,7 +115,7 @@
 ### 1.4.0
 (2024-07-07)
 
-* Es gibt jetzt einen automatischen Download des passenden Prüfsummen-Pakets (ZIP); dadurch ist es nicht mehr nötig, dieses manuell herunterzuladen, zu entpacken und die Prüfsummen-Dateien einzeln hochzuladen. Das ZIP wird im Foren-Root gespeichert, damit FC darauf zugreifen kann. Ist diese automatische Handhabung des Prüfsummen-Pakets nicht möglich, z.B. weil der Hoster den Zugriff auf externe Dateien oder aber die ZIP Klasse deaktiviert hat, dann können die Prüfsummen-Dateien wie bisher manuell hochgeladen werden.
+* Es gibt jetzt einen automatischen Download des passenden Prüfsummen-Pakets (ZIP); dadurch ist es nicht mehr nötig, dieses manuell herunterzuladen, zu entpacken und die Prüfsummen-Dateien einzeln hochzuladen. Das ZIP wird im phpBB-Wurzelverzeichnis gespeichert, damit FC darauf zugreifen kann. Ist diese automatische Handhabung des Prüfsummen-Pakets nicht möglich, z.B. weil der Hoster den Zugriff auf externe Dateien oder aber die ZIP Klasse deaktiviert hat, dann können die Prüfsummen-Dateien wie bisher manuell hochgeladen werden.
   * Um das pro nationaler Support-Seite individuell steuern zu können, gibt es jetzt die neue Datei `filecheck_config.php` in der die entsprechenden Muster für die URL und den ZIP-Namen vom jeweiligen nationalen Support Team definiert werden können. Fehlt diese Datei oder die darin enthaltenen Variablen, ist eine automatische Handhabung des Prüfsummen-Pakets nicht möglich und FC schaltet in den manuellen Modus.
   * Als Fallback haben manuell hochgeladene Prüfsummen-Dateien stets Vorrang.
   * In der Einleitung wird zusätzlich angezeigt, aus welcher Quelle (Ordner oder ZIP) die Prüfsummen-Dateien geladen wurden. Dahinter wird in Klammern angezeigt, welche Dateien effektiv aus der Quelle geladen werden konnten:

@@ -38,7 +38,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.4';
+$ver					= '1.5.5';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -245,7 +245,7 @@ if ($checksum_source == 'ZIP')
 		{
 			unset($zip);
 			$reflect_zip = new ReflectionClass('ZipArchive');
-			$zip_er_constants = array_filter($reflect_zip->getConstants(), function ($key) {
+			$zip_er_constants = array_filter($reflect_zip->getConstants(), function ($key): bool {
 				return substr($key, 0, 3) == 'ER_';
 			}, ARRAY_FILTER_USE_KEY);
 			unset($reflect_zip);
@@ -299,7 +299,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_diff_file)
 }
 
 $count_checksums		= count($hash_list);
-$checksums_count_len	= strlen($count_checksums);
+$checksums_count_len	= strlen((string) $count_checksums);
 
 /*
 	Load and check the external ignore list
@@ -533,25 +533,26 @@ foreach ($hash_list as $file => $_)
 foreach ($package_folders as $folder => $_)
 {
 	$folder = ($folder === '.') ? '' : $folder . '/';
-	$local_files = array_merge($local_files, glob($folder . '{,.}*', GLOB_BRACE));
+	$local_files = array_merge($local_files, glob(ROOT_PATH . $folder . '{.[!.],}*', GLOB_BRACE));
 }
+$local_files = str_replace(ROOT_PATH, '', $local_files);
 
 $local_files_diff = array_diff($local_files, array_keys($hash_list));
-$local_files_diff = array_filter($local_files_diff, function (string $file) {
-	return !preg_match('/(?:^|\/)\.{1,2}$/', $file) && is_file($file);
+$local_files_diff = array_filter($local_files_diff, function (string $file): bool {
+	return is_file(ROOT_PATH . $file);
 });
 
 foreach ($local_files_diff as $file)
 {
-	$file_size = (($tmp_size = @filesize($file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
+	$file_size = (($tmp_size = @filesize(ROOT_PATH . $file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
 	$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! UNEXPECTED', '(size: ' . $file_size . ')', $count_unexpected);
 }
 
 foreach ($unexpected_temp_list as $file)
 {
-	if (file_exists($file))
+	if (file_exists(ROOT_PATH . $file))
 	{
-		$file_size = (($tmp_size = @filesize($file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
+		$file_size = (($tmp_size = @filesize(ROOT_PATH . $file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
 		$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! TEMPORARY', '(size: ' . $file_size . ')', $count_unexpected);
 	}
 }
@@ -590,7 +591,7 @@ if ($count_error || $config['debug_mode'])
 	$summary .=	sprintf('FC Errors       : % ' . $checksums_count_len . 'u', $count_error) . EOL;
 }
 
-$service_list = array_map(function (string $key, int $value) {
+$service_list = array_map(function (string $key, int $value): string {
 	return "$key:$value";
 }, array_keys($service), array_values($service));
 
