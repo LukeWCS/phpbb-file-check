@@ -38,7 +38,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.6';
+$ver					= '1.5.7';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -543,7 +543,7 @@ $local_files_diff = array_filter($local_files_diff, function (string $file): boo
 	return is_file(ROOT_PATH . $file);
 });
 
-$get_file_info = function (string $file, string &$calc_hash, string &$file_size): void
+$get_file_info = function (string $file, ?string &$calc_hash, ?string &$file_size): void
 {
 	$calc_hash = (($tmp_hash = @md5_file(ROOT_PATH . $file)) !== false) ? $tmp_hash : 'ERROR';
 	$file_size = (($tmp_size = @filesize(ROOT_PATH . $file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';

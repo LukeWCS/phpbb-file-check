@@ -1,3 +1,8 @@
+### 1.5.7
+(2026-06-07)
+
+* Fix: Wenn bei der Kern-Prüfung keine abweichenden Dateien gefunden wurden, hatte das bei der Unerwartet-Prüfung einen schweren Fehler (TypeError) zur Folge. Ursache war eine unvollständige Typ-Deklaration in einer anonymen Funktion.
+
 ### 1.5.6
 (2026-06-06)
 
