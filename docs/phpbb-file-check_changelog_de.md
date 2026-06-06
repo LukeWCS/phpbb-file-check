@@ -1,3 +1,12 @@
+### 1.5.6
+(2026-06-06)
+
+* Fix: Wenn der Zugriff auf eine Datei im Prüfsummen-Paket (ZIP) nicht erfolgreich war, konnte das eine unbehandelte Warnung erzeugen. Ursache war eine undefinierte Variable.
+* Bei abweichenden und unerwarteten Dateien, werden jetzt einheitlich dieselben Datei-Informationen angezeigt. Im Detail:
+  * Kern-Prüfung: Zusätzlich zur Prüfsunmme, wird auch die Dateigrösse in Bytes angezeigt.
+  * Unerwartet-Prüfung: Zusätzlich zur Dateigrösse in Bytes, wird auch die Prüfsumme angezeigt.
+* Code Optimierung.
+
 ### 1.5.5
 (2026-05-17)
 
@@ -145,7 +154,7 @@
 ### 1.2.2
 (2023-12-24)
 
-* Bei einer Datei die 0 Bytes aufweist, jedoch laut Hash nicht leer sein sollte, wird jetzt statt `* CHANGED` die Stufe `! WARNING` gemeldet mit dem Text `has 0 bytes`.
+* Bei einer Datei die 0 Bytes aufweist, jedoch laut Prüfsumme nicht leer sein sollte, wird jetzt statt `* CHANGED` die Stufe `! WARNING` gemeldet mit dem Text `has 0 bytes`.
 * Sonstiges:
   * JS: 
     * Sollte das Kopieren in die Zwischenablage fehlschlagen, bleibt die Fehlermeldung jetzt bestehen und wird nicht mehr nach 3 Sekunden ausgeblendet.
@@ -217,7 +226,7 @@
   * `! WARNING`
 * Bei den Meldungen wird in den geschweiften Klammern jetzt auch die Nummer der Prüfsummen-Datei vorangestellt.
 * Änderungen in der Zusammenfassung:
-  * Entfernt: Anzahl der gültigen Hashes, da eine fehlerhafte Prüfsummen-Datei ohnehin nicht mehr akzeptiert wird.
+  * Entfernt: Anzahl der gültigen Prüfsummen, da eine fehlerhafte Prüfsummen-Datei ohnehin nicht mehr akzeptiert wird.
   * Neu: Anzahl der Hinweise (NOTICE), sofern welche vorhanden sind.
   * Neu: Anzahl der Warnungen (WARNING), sofern welche vorhanden sind.
 * Die Prüfsummen-Dateien werden mit ungültigem oder fehlendem Versions-Merkmal nicht mehr akzeptiert. In diesem Fall wird mit Fehlermeldung abgebrochen.
@@ -250,7 +259,7 @@
   * In der Meldungsliste bei Ausschlüssen explizit ob die Regel Ignoriert (`- IGNORED`) oder Ausnahme (`- EXCEPTION`) angewendet wurde.
   * In der Zusammenfassung 2 neue Zähler für Ignorierte und Ausnahmen.
 * RegEx für die Plausibilitätsprüfung der MD5 Einträge sowie der phpBB Version in der MD5 Datei strikter gestaltet.
-* Mehrere Texte und auch Code neutral gestaltet in Bezug auf den verwendeten Hash Algorithmus. Somit ist ein zukünftiger Wechsel auf einen anderen Hash Algorithmus einfacher.
+* Mehrere Texte und auch Code neutral gestaltet in Bezug auf den verwendeten Prüfsummen-Algorithmus. Somit ist ein zukünftiger Wechsel auf einen anderen Algorithmus einfacher.
 * Kleine Code Verbesserungen.
 
 ### 0.4.0

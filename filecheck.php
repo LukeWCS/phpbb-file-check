@@ -38,7 +38,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.5';
+$ver					= '1.5.6';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -245,7 +245,7 @@ if ($checksum_source == 'ZIP')
 		{
 			unset($zip);
 			$reflect_zip = new ReflectionClass('ZipArchive');
-			$zip_er_constants = array_filter($reflect_zip->getConstants(), function ($key): bool {
+			$zip_er_constants = array_filter($reflect_zip->getConstants(), function (string $key): bool {
 				return substr($key, 0, 3) == 'ER_';
 			}, ARRAY_FILTER_USE_KEY);
 			unset($reflect_zip);
@@ -481,7 +481,7 @@ foreach ($hash_list as $file => $hash_data)
 		{
 			if (($hash_data[1]['hash'] ?? '') == $calc_hash)
 			{
-				$result_core_list[] = result_struct($file, $hash_data[1], '  NOTICE', 'has the ' . $checksum_diff_name . ' hash', $count_notice);
+				$result_core_list[] = result_struct($file, $hash_data[1], '  NOTICE', "has the {$checksum_diff_name} hash", $count_notice);
 			}
 			else if ($calc_hash == EMPTY_FILE_HASH)
 			{
@@ -489,7 +489,8 @@ foreach ($hash_list as $file => $hash_data)
 			}
 			else
 			{
-				$result_core_list[] = result_struct($file, $hash_data[0], '* DIFFERENT', '(hash: ' . $calc_hash . ')', $count_different);
+				$file_size = (($tmp_size = @filesize(ROOT_PATH . $file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
+				$result_core_list[] = result_struct($file, $hash_data[0], '* DIFFERENT', "(hash: {$calc_hash}, size: {$file_size})", $count_different);
 			}
 		}
 	}
@@ -542,18 +543,24 @@ $local_files_diff = array_filter($local_files_diff, function (string $file): boo
 	return is_file(ROOT_PATH . $file);
 });
 
+$get_file_info = function (string $file, string &$calc_hash, string &$file_size): void
+{
+	$calc_hash = (($tmp_hash = @md5_file(ROOT_PATH . $file)) !== false) ? $tmp_hash : 'ERROR';
+	$file_size = (($tmp_size = @filesize(ROOT_PATH . $file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
+};
+
 foreach ($local_files_diff as $file)
 {
-	$file_size = (($tmp_size = @filesize(ROOT_PATH . $file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
-	$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! UNEXPECTED', '(size: ' . $file_size . ')', $count_unexpected);
+	$get_file_info($file, $calc_hash, $file_size);
+	$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! UNEXPECTED', "(hash: {$calc_hash}, size: {$file_size})", $count_unexpected);
 }
 
 foreach ($unexpected_temp_list as $file)
 {
 	if (file_exists(ROOT_PATH . $file))
 	{
-		$file_size = (($tmp_size = @filesize(ROOT_PATH . $file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
-		$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! TEMPORARY', '(size: ' . $file_size . ')', $count_unexpected);
+		$get_file_info($file, $calc_hash, $file_size);
+		$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! TEMPORARY', "(hash: {$calc_hash}, size: {$file_size})", $count_unexpected);
 	}
 }
 
@@ -965,7 +972,8 @@ function zip_extract_to_array(string $file_name): ?array
 		return null;
 	}
 
-	$file_content = $zip->getFromName($file_name);
+	$file_content		= $zip->getFromName($file_name);
+	$file_content_list	= false;
 	if ($file_content !== false)
 	{
 		$file_content_list = preg_split('/\n/', $file_content, -1, PREG_SPLIT_NO_EMPTY);
