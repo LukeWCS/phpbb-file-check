@@ -16,8 +16,11 @@
 /*
 	Initialization
 */
+
+mb_internal_encoding('UTF-8');
+
 define('IS_BROWSER'		, ($_SERVER['HTTP_USER_AGENT'] ?? '') != '');
-define('SERVER_SOFTWARE', trim(preg_replace('/.*?([a-zA-Z][a-zA-Z_\-]+).*/', '$1', $_SERVER['SERVER_SOFTWARE'] ?? '')) ?: null);
+define('SERVER_SOFTWARE', trim(preg_replace('/.*?([a-zA-Z][a-zA-Z_\-]+).*/', '$1', $_SERVER['SERVER_SOFTWARE'] ?? ''), " \n\r\t\v\x00") ?: null);
 
 const EOL				= "\n";
 const VALID_CHARS		= 'a-zA-Z0-9\/\-_.';
@@ -38,7 +41,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.5.7';
+$ver					= '1.6.0-b1';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -52,6 +55,7 @@ $checksum_version_mode	= 'Manually';
 $checksum_file_flags	= [];
 $config					= [];
 $messages				= '';
+$detail_sep				= ' | ';
 $core_ignore_list		= [
 	'^\.git',
 	'\/\.git',
@@ -104,6 +108,7 @@ else
 	message(FC_WARNING, "Config file [{$config_file}] not found.");
 }
 $config['debug_mode']		= $config['debug_mode']			?? 0;
+$config['show_extensions']	= $config['show_extensions']	?? 0;
 $config['zip_url_pattern']	= $config['zip_url_pattern']	?? '';
 $config['zip_name_pattern']	= $config['zip_name_pattern']	?? '';
 
@@ -490,7 +495,7 @@ foreach ($hash_list as $file => $hash_data)
 			else
 			{
 				$file_size = (($tmp_size = @filesize(ROOT_PATH . $file)) !== false) ? number_format($tmp_size) . ' bytes' : 'ERROR';
-				$result_core_list[] = result_struct($file, $hash_data[0], '* DIFFERENT', "(hash: {$calc_hash}, size: {$file_size})", $count_different);
+				$result_core_list[] = result_struct($file, $hash_data[0], '* DIFFERENT', "(Hash: {$calc_hash}{$detail_sep}Size: {$file_size})", $count_different);
 			}
 		}
 	}
@@ -552,7 +557,7 @@ $get_file_info = function (string $file, ?string &$calc_hash, ?string &$file_siz
 foreach ($local_files_diff as $file)
 {
 	$get_file_info($file, $calc_hash, $file_size);
-	$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! UNEXPECTED', "(hash: {$calc_hash}, size: {$file_size})", $count_unexpected);
+	$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! UNEXPECTED', "(Hash: {$calc_hash}{$detail_sep}Size: {$file_size})", $count_unexpected);
 }
 
 foreach ($unexpected_temp_list as $file)
@@ -560,17 +565,178 @@ foreach ($unexpected_temp_list as $file)
 	if (file_exists(ROOT_PATH . $file))
 	{
 		$get_file_info($file, $calc_hash, $file_size);
-		$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! TEMPORARY', "(hash: {$calc_hash}, size: {$file_size})", $count_unexpected);
+		$result_unexpected_list[] = result_struct($file, $hash_data_zero, '! TEMPORARY', "(Hash: {$calc_hash}{$detail_sep}Size: {$file_size})", $count_unexpected);
 	}
 }
 
 $runtime_unexpected = microtime(true) - $start_time_unexpected;
 
 /*
+	Identify available extensions
+*/
+$result_extensions_list = [];
+$status_extensions		= [];
+$count_extensions		= [
+	'all'			=> 0,
+	'enabled'		=> 0,
+	'disabled'		=> 0,
+	'not_installed'	=> 0,
+];
+$ext_folder				= str_replace('\\', '/', ROOT_PATH . 'ext/');
+$start_time_extensions	= microtime(true);
+
+// var_dump(PDO::getAvailableDrivers());
+// exit;
+
+if ($config['show_extensions'] && file_exists(ROOT_PATH . 'config.php') && filesize(ROOT_PATH . 'config.php'))
+{
+	// $dbms = $dbhost = $dbname = $dbuser = $dbpasswd = $table_prefix = '';
+	// include ROOT_PATH . 'config.php';
+
+	$config_php_content = file_get_contents(ROOT_PATH . 'config.php');
+	$get_phpbb_var = function (string $varname) use ($config_php_content): string
+	{
+		preg_match('/\$' . $varname . '\s*=\s*\'(.*?)\'/', $config_php_content, $matches);
+		return $matches[1] ?? '';
+	};
+
+	$dbms			= $get_phpbb_var('dbms');
+	$dbhost			= $get_phpbb_var('dbhost');
+	$dbname			= $get_phpbb_var('dbname');
+	$dbuser			= $get_phpbb_var('dbuser');
+	$dbpasswd		= $get_phpbb_var('dbpasswd');
+	$table_prefix	= $get_phpbb_var('table_prefix');
+
+// xdebug_var_dump(empty($dbname));
+// xdebug_var_dump($dbms);
+// xdebug_var_dump($dbhost);
+// xdebug_var_dump($dbname);
+// xdebug_var_dump($dbuser);
+// xdebug_var_dump($dbpasswd);
+// xdebug_var_dump($table_prefix);
+
+// exit;
+
+	if (!empty($dbms) && !empty($dbhost) && !empty($dbname) && !empty($dbuser) && !empty($dbpasswd) && !empty($table_prefix))
+	{
+
+// xdebug_var_dump(PDO::getAvailableDrivers());
+
+		/* phpbb/install/helper/database.php->$supported_dbms() */
+		$pdo_dbms = [
+			'phpbb\db\driver\mysqli'					=> 'mysql',
+			'phpbb\db\driver\mssql_odbc'				=> 'odbc',
+			'phpbb\db\driver\mssqlnative'				=> 'sqlsrv',
+			'phpbb\db\driver\oracle'					=> 'oci',
+			'phpbb\db\driver\phpbb\db\driver\postgres'	=> 'pgsql',
+			'phpbb\db\driver\sqlite3'					=> 'sqlite',
+		][$dbms] ?? 'mysql';
+
+// $dbhost		= 'localhost';
+// $dbname		= 'test33';
+// $dbuser		= 'test33';
+// $dbpasswd	= 'test';
+// $dbpasswd	= '---';
+
+		$pdo_dsn = "{$pdo_dbms}:host={$dbhost};dbname={$dbname};charset=utf8mb4";
+		$pdo_options = [
+			PDO::ATTR_ERRMODE				=> PDO::ERRMODE_EXCEPTION,
+			PDO::ATTR_DEFAULT_FETCH_MODE	=> PDO::FETCH_ASSOC,
+		];
+
+		try
+		{
+			$pdo = new PDO($pdo_dsn, $dbuser, $dbpasswd, $pdo_options);
+			$sql = 'SELECT ext_name, ext_active
+					FROM ' . $table_prefix . 'ext';
+			$result = $pdo->query($sql);
+			$exts_db = $result->fetchAll();
+			$pdo = null;
+
+			$status_extensions = array_combine(array_column($exts_db, 'ext_name'), array_column($exts_db, 'ext_active'));
+		}
+		catch (\PDOException $e)
+		{
+			if ($config['debug_mode'])
+			{
+				// throw new \PDOException($e->getMessage());
+				message(FC_WARNING, 'PDO: ' . $e->getMessage());
+			}
+		}
+// xdebug_var_dump($status_extensions);
+	}
+}
+
+// exit;
+
+$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($ext_folder, RecursiveDirectoryIterator::SKIP_DOTS));
+$iterator->setMaxDepth(2);
+// $status_extensions = [];
+foreach ($iterator as $file)
+{
+	if ($iterator->getDepth() == 2 && $file->getFilename() == 'composer.json')
+	{
+		$composer_pathname	= str_replace('\\', '/', $file->getPathname());
+		$composer_content	= @file_get_contents($composer_pathname);
+		if ($composer_content !== false)
+		{
+			$composer_ary 	= json_decode($composer_content, true);
+			$ext_info		= [
+				'name'			=> $composer_ary['name']									?? false,
+				'homepage'		=> $composer_ary['homepage']								?? false,
+				'version'		=> $composer_ary['version']									?? false,
+				'php'			=> $composer_ary['require']['php']							?? false,
+				'display_name'	=> $composer_ary['extra']['display-name']					?? false,
+				'phpbb'			=> $composer_ary['extra']['soft-require']['phpbb/phpbb']	?? false,
+			];
+			$msg_type		= [
+				1	=> '2 EXTENSION',
+				0	=> '1 EXTENSION',
+				-1	=> '0 EXTENSION',
+				-2	=> '  EXTENSION',
+			][$status_extensions[$ext_info['name']] ?? ($status_extensions ? -1 : -2)];
+
+			if ($ext_info['name'] !== false && $ext_info['display_name'] !== false && $ext_info['version'] !== false
+				&& dirname($composer_pathname, 1) == $ext_folder . $composer_ary['name'])
+			{
+				$ext_details	 = ($detail = $ext_info['phpbb'])		? 'phpBB: '		. $detail . $detail_sep : '';
+				$ext_details	.= ($detail = $ext_info['php'])			? 'PHP: '		. $detail . $detail_sep : '';
+				$ext_details	.= ($detail = $ext_info['homepage'])	? 'Homepage: '	. $detail . $detail_sep : '';
+				$ext_details	 = rtrim($ext_details, $detail_sep);
+				$hash_data		 = ['file' => $ext_info['display_name'], 'hash_file_id' => 0, 'hash_line_num' => 0];
+// xdebug_var_dump($ext_details);
+// exit;
+
+				$result_extensions_list[] = result_struct("{$ext_info['display_name']} v{$ext_info['version']}", $hash_data, $msg_type, "({$ext_details})", $count_extensions['all']);
+
+				if ($status_extensions)
+				{
+					$count_extensions[[
+						'2 EXTENSION'	=> 'enabled',
+						'1 EXTENSION'	=> 'disabled',
+						'0 EXTENSION'	=> 'not_installed',
+					][$msg_type]]++;
+				}
+			}
+		}
+	}
+}
+// xdebug_var_dump($count_extensions);
+// xdebug_var_dump($result_extensions_list[0]);
+
+// exit;
+
+$runtime_extensions = microtime(true) - $start_time_extensions;
+
+/*
 	Format results and add to display buffer
 */
-$output .= EOL . format_results($result_core_list, 'List of core files with anomalies');
-$output .= EOL . format_results($result_unexpected_list, 'List of unexpected files');
+$output .= EOL . format_results($result_core_list, 'List of core files with anomalies', 'files');
+$output .= EOL . format_results($result_unexpected_list, 'List of unexpected files', 'files');
+if ($config['show_extensions'])
+{
+	$output .= EOL . format_results($result_extensions_list, 'List of available Extensions', 'extensions');
+}
 
 /*
 	Display: results and summary
@@ -585,6 +751,8 @@ $summary .=		sprintf('Checked files   : % ' . $checksums_count_len . 'u', $count
 $summary .=		sprintf('Missing files   : % ' . $checksums_count_len . 'u', $count_missing) . EOL;
 $summary .=		sprintf('Different files : % ' . $checksums_count_len . 'u', $count_different) . EOL;
 $summary .=		sprintf('Unexpected files: % ' . $checksums_count_len . 'u', $count_unexpected) . EOL;
+$summary .=		sprintf('Extensions      : %1$ ' . $checksums_count_len . 'u' . ($status_extensions ? ' (Enabled:%2$u, Disabled:%3$u, Not-Installed:%4$u)' : ''),
+	$count_extensions['all'], $count_extensions['enabled'], $count_extensions['disabled'], $count_extensions['not_installed']) . EOL;
 if ($count_warning || $config['debug_mode'])
 {
 	$summary .=	sprintf('Warnings        : % ' . $checksums_count_len . 'u', $count_warning) . EOL;
@@ -602,7 +770,7 @@ $service_list = array_map(function (string $key, int $value): string {
 	return "$key:$value";
 }, array_keys($service), array_values($service));
 
-$exec_info =	sprintf('Run time          : %.3f seconds (Core-check: %.3f, Unexpected-check: %.3f)', microtime(true) - $start_time, $runtime_core, $runtime_unexpected) . EOL;
+$exec_info =	sprintf('Run time          : %.3f seconds (Core-check: %.3f, Unexpected-check: %.3f, Extensions: %.3f)', microtime(true) - $start_time, $runtime_core, $runtime_unexpected, $runtime_extensions) . EOL;
 $exec_info .=	sprintf('Max execution time: %u seconds', ini_get('max_execution_time')) . EOL;
 $exec_info .=	sprintf('Memory peak usage : %s bytes', number_format(memory_get_peak_usage())) . EOL;
 $exec_info .=	sprintf('Memory limit      : %s', ini_get('memory_limit')) . EOL;
@@ -619,8 +787,17 @@ $output .= EOL;
 $output .= 'Script/PHP information' . EOL;
 $output .= str_repeat('-', column_max_len($exec_info)) . EOL;
 $output .= $exec_info;
-$output .= html_end();
 
+if ($config['debug_mode'])
+{
+	$output .= EOL;
+	$output .= 'Debug messages' . EOL;
+	$output .= '--------------' . EOL;
+
+	$output .= $messages;
+}
+
+$output .= html_end();
 flush_buffer();
 
 /*
@@ -641,14 +818,25 @@ function result_struct(string $file, array $hash_data, string $msg_type, string 
 	];
 };
 
-function format_results(array $result_list, string $result_title = ''): string
+function format_results(array $result_list, string $result_title = '', string $sort_method = 'files'): string
 {
 	if (count($result_list) > 0)
 	{
 		$output = '';
-		uasort($result_list, function($a, $b) {
-			return [$a['path'], $a['file']] <=> [$b['path'], $b['file']];
-		});
+		if ($sort_method == 'extensions')
+		{
+			array_multisort(
+				array_column($result_list, 'msg_type'), SORT_DESC,
+				array_column($result_list, 'file'), SORT_NATURAL + SORT_FLAG_CASE,
+				$result_list
+			);
+		}
+		else
+		{
+			uasort($result_list, function($a, $b) {
+				return [$a['path'], $a['file']] <=> [$b['path'], $b['file']];
+			});
+		}
 
 		$line_num_len = column_max_len($result_list, 'hash_line_num');
 		$msg_type_len = column_max_len($result_list, 'msg_type');
@@ -953,7 +1141,16 @@ function column_max_len($list, string $column_name = ''): int
 {
 	$column = is_array($list) ? array_column($list, $column_name) : explode(EOL, $list);
 
-	return max(array_map('strlen', $column));
+// foreach($column as $row)
+// {
+// if (strlen($row) != mb_strlen($row))
+// {
+// xdebug_var_dump($row);
+// }
+// }
+// xdebug_var_dump(mb_internal_encoding());
+
+	return max(array_map('mb_strlen', $column));
 }
 
 function zip_file_exists(string $file_name): bool
@@ -1009,7 +1206,7 @@ function socket_get_contents(string $host, string $directory, string $file, int 
 	$status = [];
 	while (!feof($socket_h))
 	{
-		$line = trim(fgets($socket_h));
+		$line = trim(fgets($socket_h), " \n\r\t\v\x00");
 		if ($line == '')
 		{
 			break;

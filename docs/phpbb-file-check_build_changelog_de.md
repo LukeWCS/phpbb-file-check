@@ -1,3 +1,20 @@
+#### 1.6.0-b1
+* Fix: Kleines optisches Problem behoben; für die Berechnung der Linien-Länge oberhalb und unterhalb der Listen, wurde eine falsche PHP Funktion verwendet, was bei Listen-Einträgen, die Multibyte Zeichen enthielten, zu einer falschen Länge führte. Dieses Problem trat erst bei der nachfolgenden Neuerung auf.
+* Neue Funktion zum Ermitteln der verfügbaren Erweiterungen und - sofern möglich - ihrem Status:
+  * Angezeigt werden alle verfügbaren Erweiterungen mit ihrem Anzeigenamen, Version, phpBB Voraussetzungen, PHP Voraussetzungen und Homepage (sofern vorhanden). Ist der Zugriff auf die Datenbank erfolgreich, wird zusätzlich der Status ermittelt und angezeigt, also Aktiviert, Deaktiviert und Nicht installiert.
+  * Die Erweiterungen werden in einer dritten Liste namens "List of available Extensions" gelistet, mit folgenden 4 neuen Nachrichtentypen:
+    * `2 EXTENSION`: Aktivierte Erweiterung.
+    * `1 EXTENSION`: Deaktivierte Erweiterung.
+    * `0 EXTENSION`: Nicht installierte Erweiterung.
+    * `  EXTENSION`: Status unbekannt. Tritt dann auf, wenn der Zugriff auf die Datenbank nicht möglich/erfolgreich war.
+  * Die Erweiterungen werden zuerst nach Nachrichtentyp sortiert und dann nach Anzeigename (natürliche Ordnung).
+  * Die Funktion ist per Standard deaktiviert und kann bei Bedarf in `filecheck_config.php` über `show_extensions` aktiviert werden.
+  * Unabhängig von diesem Schalter werden die verfügbaren Erweiterungen immer ermittelt, damit in der Zusammenfassung die Anzahl der Erweiterungen angezeigt werden kann. Auf die Datenbank wird allerdings nur dann zugegriffen, wenn der Schalter auch aktiv ist, da auch nur dann der Status relevant ist.
+  * In der Zusammenfassung gibt es einen neuen Eintrag "Extensions", der die Anzahl aller verfügbaren Erweiterungen anzeigt. Dahinter wird die Anzahl der drei Gruppen "Enabled", "Disabled" und "Not-Installed" angezeigt, sofern Zugriff auf die Datenbank erfolgreich war.
+* Wird der Debug Modus aktiviert, werden am Ende des Berichts alle im Nachrichtenspeicher vorhandenen Meldungen in einem neuen Abschnitt namens "Debug messages" angezeigt, die normalerweise nicht sichtbar sind.
+* In den 3 Listen werden zusätzliche Informationen in runden Klammern nicht mehr mit `, ` getrennt, sondern mit ` | ` um eine bessere optische Trennung zu erreichen.
+* Anpassung und Freigabe für PHP 8.6.
+
 ### 1.5.7
 * Release (2026-06-07)
 
@@ -20,7 +37,7 @@
 * Release (2025-11-08)
 * Laufzeit bei Exception-Check weiter optimiert; jetzt bis circa 35% schneller.
 
-### 1.5.1-b1
+#### 1.5.1-b1
 * Exception-Check:
   * Laufzeit optimiert; dadurch benötigt die Funktion zwar etwas mehr RAM, läuft aber circa 30% schneller.
   * Meldungen haben jetzt ihren eigenen Meldung-Typ: `! UNEXPECTED`, anstatt `! WARNING`.
@@ -35,12 +52,12 @@
 * Code Bereinigung.
 * Wenn Core-Check oder Exception-Check keine Funde ergeben, wird entsprechend als Meldung "no issues found" in die Liste eingetragen. Allerdings wurden dabei die beiden Trennlinien mit derselben Länge der Meldung erzeugt, die jedoch kürzer ist als die Überschrift. Das sah unschön aus und jetzt gilt als Mindestlänge für die Trennlinien die Länge der Überschrift.
 
-### 1.5.0-b2
+#### 1.5.0-b2
 * Fix: Beim Unexpected-Check sollte eine Abfrage verhindern, dass eine bestimmte Schleife unnötig oft ausgeführt wird, jedoch war diese Abfrage fehlerhaft. Dadurch wurden - als Beispiel - bei phpBB 3.3.15 insgesamt 3959 Durchläufe ausgeführt, anstatt 561.
 * Der Ordner `{root}/ext/` wird jetzt ebenfalls ignoriert.
 * Code Optimierung.
 
-### 1.5.0-b1
+#### 1.5.0-b1
 * Neue Prüfung auf unerwartete Dateien:
   * Im Anschluss des bisherigen Prüflaufs der auf Existenz und Integrität prüft, wird noch eine weitere, separate Prüfung ausgeführt, die darauf spezialisiert ist, unerwartete Dateien zu ermitteln. Das Ergebnis dieser neuen Prüfung wird dann in einer separaten, zweiten Liste angezeigt.
   * Da es im Bericht nun zwei Listen gibt, haben diese entsprechende Überschriften bekommen:

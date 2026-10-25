@@ -15,6 +15,7 @@
 */
 $config = [
 	'debug_mode'		=> 0,
+	'show_extensions'	=> 1,
 	'zip_url_pattern'	=> 'https://downloads.phpbb.de/pakete/deutsch/{MAJOR}.{MINOR}/{MAJOR}.{MINOR}.{PATCH}/',
 	'zip_name_pattern'	=> 'phpBB-{MAJOR}.{MINOR}.{PATCH}-deutsch-FileCheck-MD5.zip',
 ];
