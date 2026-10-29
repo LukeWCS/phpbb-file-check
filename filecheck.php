@@ -6,7 +6,7 @@
 * @copyright (c) 2023 LukeWCS <phpBB.de>
 * @license GNU General Public License, version 2 (GPL-2.0-only)
 *
-* PHP requirements: 7.1.0 - 8.5.x
+* PHP requirements: 7.1.0 - 8.6.x
 *
 */
 
@@ -41,7 +41,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.6.0-b1';
+$ver					= '1.6.0-b2';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -94,7 +94,7 @@ $service = [
 	Generate title
 */
 $output .= $title . EOL;
-$output .= str_repeat('=', strlen($title)) . EOL;
+$output .= str_repeat('=', mb_strlen($title)) . EOL;
 
 /*
 	Include config
@@ -105,7 +105,7 @@ if (file_exists(ROOT_PATH . $config_file))
 }
 else
 {
-	message(FC_WARNING, "Config file [{$config_file}] not found.");
+	message(FC_WARNING, "Config: file [{$config_file}] not found.");
 }
 $config['debug_mode']		= $config['debug_mode']			?? 0;
 $config['show_extensions']	= $config['show_extensions']	?? 0;
@@ -160,12 +160,12 @@ message(FC_NOTICE, "MD5 source: {$checksum_source}");
 */
 if ($checksum_source == 'ZIP')
 {
-	message(FC_WARNING, 'zip_url_pattern not set.',				$config['zip_url_pattern'] == '');
-	message(FC_WARNING, 'zip_name_pattern not set.',			$config['zip_name_pattern'] == '');
-	message(FC_WARNING, 'ZipArchive extension not available.',	!$service['ZipArchive']);
-	message(FC_NOTICE, 'cURL extension not available.',			!$service['cURL']);
-	message(FC_NOTICE, 'Sockets not available.',				!$service['Sockets']);
-	message(FC_NOTICE, 'allow_url_fopen not enabled.',			!$service['allow_url_fopen']);
+	message(FC_WARNING	, 'Config: zip_url_pattern not set.',				$config['zip_url_pattern'] == '');
+	message(FC_WARNING	, 'Config: zip_name_pattern not set.',				$config['zip_name_pattern'] == '');
+	message(FC_WARNING	, 'Service: ZipArchive extension not available.',	!$service['ZipArchive']);
+	message(FC_NOTICE	, 'Service: cURL extension not available.',			!$service['cURL']);
+	message(FC_NOTICE	, 'Service: Sockets not available.',				!$service['Sockets']);
+	message(FC_NOTICE	, 'Service: allow_url_fopen not enabled.',			!$service['allow_url_fopen']);
 
 	$zip_url	= str_ireplace(VERSION_VARS, $phpbb_version_segments, $config['zip_url_pattern']);
 	$zip_name	= str_ireplace(VERSION_VARS, $phpbb_version_segments, $config['zip_name_pattern']);
@@ -179,7 +179,7 @@ if ($checksum_source == 'ZIP')
 		}
 		else
 		{
-			message(FC_WARNING, "No permission to create [{$zip_name}].");
+			message(FC_WARNING, "Download: No permission to create [{$zip_name}].");
 		}
 	}
 
@@ -223,7 +223,7 @@ if ($checksum_source == 'ZIP')
 
 		if ($zip_content === false)
 		{
-			message(FC_WARNING, "Checksum package [{$zip_name}] could not be downloaded.");
+			message(FC_WARNING, "Download: Checksum package [{$zip_name}] could not be downloaded.");
 		}
 		else
 		{
@@ -231,12 +231,12 @@ if ($checksum_source == 'ZIP')
 			{
 				if (file_put_contents(ROOT_PATH . $zip_name, $zip_content) === false)
 				{
-					message(FC_WARNING, "Checksum package [{$zip_name}] could not be saved.");
+					message(FC_WARNING, "Download: Checksum package [{$zip_name}] could not be saved.");
 				}
 			}
 			else
 			{
-				message(FC_WARNING, 'The transferred data does not contain a valid ZIP archive.');
+				message(FC_WARNING, 'Download: The transferred data does not contain a valid ZIP archive.');
 			}
 		}
 	}
@@ -256,7 +256,7 @@ if ($checksum_source == 'ZIP')
 			unset($reflect_zip);
 			$zip_er_constants = array_flip($zip_er_constants);
 			message(FC_NOTICE, 'ZipArchive: ' . ($zip_er_constants[$zip_rc] ?? "RC: {$zip_rc}"));
-			message(FC_WARNING, "Checksum package [{$zip_name}] could not be opened.");
+			message(FC_WARNING, "Download: Checksum package [{$zip_name}] could not be opened.");
 		}
 	}
 }
@@ -410,7 +410,7 @@ $output .= sprintf('MD5 Version 2: ' . ($checksum_diff_ver ? '%1$s (%2$s)' : '-'
 $output .= sprintf('PHP Version  : %1$u.%2$u (%3$s)', PHP_MAJOR_VERSION, PHP_MINOR_VERSION, PHP_OS) . EOL;
 $output .= sprintf('Server       : %1$s', SERVER_SOFTWARE ?? (IS_BROWSER ? 'Unknown' : 'cli')) . EOL;
 $output .= EOL;
-$output .= 'Please wait, ' . $count_checksums . ' checksums are being processed...' . EOL;
+$output .= "Please wait, {$count_checksums} checksums are being processed..." . EOL;
 
 if (IS_BROWSER)
 {
@@ -585,16 +585,10 @@ $count_extensions		= [
 $ext_folder				= str_replace('\\', '/', ROOT_PATH . 'ext/');
 $start_time_extensions	= microtime(true);
 
-// var_dump(PDO::getAvailableDrivers());
-// exit;
-
 if ($config['show_extensions'] && file_exists(ROOT_PATH . 'config.php') && filesize(ROOT_PATH . 'config.php'))
 {
-	// $dbms = $dbhost = $dbname = $dbuser = $dbpasswd = $table_prefix = '';
-	// include ROOT_PATH . 'config.php';
-
-	$config_php_content = file_get_contents(ROOT_PATH . 'config.php');
-	$get_phpbb_var = function (string $varname) use ($config_php_content): string
+	$config_php_content	= file_get_contents(ROOT_PATH . 'config.php');
+	$get_phpbb_var		= function (string $varname) use ($config_php_content): string
 	{
 		preg_match('/\$' . $varname . '\s*=\s*\'(.*?)\'/', $config_php_content, $matches);
 		return $matches[1] ?? '';
@@ -607,71 +601,54 @@ if ($config['show_extensions'] && file_exists(ROOT_PATH . 'config.php') && files
 	$dbpasswd		= $get_phpbb_var('dbpasswd');
 	$table_prefix	= $get_phpbb_var('table_prefix');
 
-// xdebug_var_dump(empty($dbname));
-// xdebug_var_dump($dbms);
-// xdebug_var_dump($dbhost);
-// xdebug_var_dump($dbname);
-// xdebug_var_dump($dbuser);
-// xdebug_var_dump($dbpasswd);
-// xdebug_var_dump($table_prefix);
-
-// exit;
-
-	if (!empty($dbms) && !empty($dbhost) && !empty($dbname) && !empty($dbuser) && !empty($dbpasswd) && !empty($table_prefix))
+	if (!empty($dbms))
 	{
-
-// xdebug_var_dump(PDO::getAvailableDrivers());
-
 		/* phpbb/install/helper/database.php->$supported_dbms() */
 		$pdo_dbms = [
-			'phpbb\db\driver\mysqli'					=> 'mysql',
-			'phpbb\db\driver\mssql_odbc'				=> 'odbc',
-			'phpbb\db\driver\mssqlnative'				=> 'sqlsrv',
-			'phpbb\db\driver\oracle'					=> 'oci',
-			'phpbb\db\driver\phpbb\db\driver\postgres'	=> 'pgsql',
-			'phpbb\db\driver\sqlite3'					=> 'sqlite',
-		][$dbms] ?? 'mysql';
+			'phpbb\db\driver\mysqli'		=> 'mysql',
+			'phpbb\db\driver\mssql_odbc'	=> 'odbc',
+			'phpbb\db\driver\mssqlnative'	=> 'sqlsrv',
+			'phpbb\db\driver\oracle'		=> 'oci',
+			'phpbb\db\driver\postgres'		=> 'pgsql',
+			'phpbb\db\driver\sqlite3'		=> 'sqlite',
+		][str_replace('\\\\', '\\', $dbms)]	?? 'unknown';
 
-// $dbhost		= 'localhost';
-// $dbname		= 'test33';
-// $dbuser		= 'test33';
-// $dbpasswd	= 'test';
-// $dbpasswd	= '---';
+		message(FC_WARNING, "PDO: Unknown DBMS: {$dbms}", $pdo_dbms == 'unknown');
 
-		$pdo_dsn = "{$pdo_dbms}:host={$dbhost};dbname={$dbname};charset=utf8mb4";
-		$pdo_options = [
-			PDO::ATTR_ERRMODE				=> PDO::ERRMODE_EXCEPTION,
-			PDO::ATTR_DEFAULT_FETCH_MODE	=> PDO::FETCH_ASSOC,
-		];
+		$service['PDO'] = $pdo_dbms;
 
-		try
+		if ($pdo_dbms != 'unknown')
 		{
-			$pdo = new PDO($pdo_dsn, $dbuser, $dbpasswd, $pdo_options);
-			$sql = 'SELECT ext_name, ext_active
-					FROM ' . $table_prefix . 'ext';
-			$result = $pdo->query($sql);
-			$exts_db = $result->fetchAll();
-			$pdo = null;
+			$pdo_dsn = "{$pdo_dbms}:host={$dbhost};dbname={$dbname}" . (($pdo_dbms == 'mysql') ? ';charset=utf8mb4' : '');
+			$pdo_options = [
+				PDO::ATTR_ERRMODE				=> PDO::ERRMODE_EXCEPTION,
+				PDO::ATTR_DEFAULT_FETCH_MODE	=> PDO::FETCH_ASSOC,
+			];
 
-			$status_extensions = array_combine(array_column($exts_db, 'ext_name'), array_column($exts_db, 'ext_active'));
-		}
-		catch (\PDOException $e)
-		{
-			if ($config['debug_mode'])
+			try
 			{
-				// throw new \PDOException($e->getMessage());
-				message(FC_WARNING, 'PDO: ' . $e->getMessage());
+				$pdo = new PDO($pdo_dsn, $dbuser, $dbpasswd, $pdo_options);
+				$sql = 'SELECT ext_name, ext_active
+						FROM ' . $table_prefix . 'ext';
+				$result = $pdo->query($sql);
+				$exts_db = $result->fetchAll();
+				$pdo = null;
+
+				$status_extensions = array_combine(array_column($exts_db, 'ext_name'), array_column($exts_db, 'ext_active'));
+			}
+			catch (\PDOException $e)
+			{
+				if ($config['debug_mode'])
+				{
+					message(FC_WARNING, 'PDO: ' . $e->getMessage());
+				}
 			}
 		}
-// xdebug_var_dump($status_extensions);
 	}
 }
 
-// exit;
-
 $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($ext_folder, RecursiveDirectoryIterator::SKIP_DOTS));
 $iterator->setMaxDepth(2);
-// $status_extensions = [];
 foreach ($iterator as $file)
 {
 	if ($iterator->getDepth() == 2 && $file->getFilename() == 'composer.json')
@@ -699,13 +676,13 @@ foreach ($iterator as $file)
 			if ($ext_info['name'] !== false && $ext_info['display_name'] !== false && $ext_info['version'] !== false
 				&& dirname($composer_pathname, 1) == $ext_folder . $composer_ary['name'])
 			{
-				$ext_details	 = ($detail = $ext_info['phpbb'])		? 'phpBB: '		. $detail . $detail_sep : '';
-				$ext_details	.= ($detail = $ext_info['php'])			? 'PHP: '		. $detail . $detail_sep : '';
-				$ext_details	.= ($detail = $ext_info['homepage'])	? 'Homepage: '	. $detail . $detail_sep : '';
-				$ext_details	 = rtrim($ext_details, $detail_sep);
-				$hash_data		 = ['file' => $ext_info['display_name'], 'hash_file_id' => 0, 'hash_line_num' => 0];
-// xdebug_var_dump($ext_details);
-// exit;
+				$ext_details = implode($detail_sep, preg_grep('/.+/', [
+					($detail = $ext_info['phpbb'])		? 'phpBB: '		. $detail : '',
+					($detail = $ext_info['php'])		? 'PHP: '		. $detail : '',
+					($detail = $ext_info['homepage'])	? 'Homepage: '	. $detail : '',
+				]));
+
+				$hash_data = ['file' => $ext_info['display_name'], 'hash_file_id' => 0, 'hash_line_num' => 0];
 
 				$result_extensions_list[] = result_struct("{$ext_info['display_name']} v{$ext_info['version']}", $hash_data, $msg_type, "({$ext_details})", $count_extensions['all']);
 
@@ -721,10 +698,6 @@ foreach ($iterator as $file)
 		}
 	}
 }
-// xdebug_var_dump($count_extensions);
-// xdebug_var_dump($result_extensions_list[0]);
-
-// exit;
 
 $runtime_extensions = microtime(true) - $start_time_extensions;
 
@@ -766,7 +739,7 @@ if ($count_error || $config['debug_mode'])
 	$summary .=	sprintf('FC Errors       : % ' . $checksums_count_len . 'u', $count_error) . EOL;
 }
 
-$service_list = array_map(function (string $key, int $value): string {
+$service_list = array_map(function (string $key, $value): string {
 	return "$key:$value";
 }, array_keys($service), array_values($service));
 
@@ -856,7 +829,7 @@ function format_results(array $result_list, string $result_title = '', string $s
 		$output = 'no issues found' . EOL ;
 	}
 
-	add_list_lines($output, strlen($result_title));
+	add_list_lines($output, mb_strlen($result_title));
 
 	return $result_title . (($result_title != '') ? EOL : '') . $output;
 }
@@ -1140,15 +1113,6 @@ function add_list_lines(string &$list, int $min_len = 0): void
 function column_max_len($list, string $column_name = ''): int
 {
 	$column = is_array($list) ? array_column($list, $column_name) : explode(EOL, $list);
-
-// foreach($column as $row)
-// {
-// if (strlen($row) != mb_strlen($row))
-// {
-// xdebug_var_dump($row);
-// }
-// }
-// xdebug_var_dump(mb_internal_encoding());
 
 	return max(array_map('mb_strlen', $column));
 }

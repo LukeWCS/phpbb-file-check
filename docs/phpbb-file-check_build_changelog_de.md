@@ -1,3 +1,18 @@
+#### 1.6.0-b2
+* Fixes bei PDO:
+  * Zuordnung vom phpBB DBMS Treiber zum PDO Treiber:
+    * Bei Postgres gab es einen falschen Eintrag beim phpBB Treiber, weshalb kein Zugriff auf Postgres möglich war. Ursache war offensichtlich ein C&P Fehler. [Rückmeldung: Mike-on-Tour (phpBB.de)]
+    * Die Maskierung der Backslashes in `config.php` wurde bei der Zuordnung zum PDO Treiber nicht automatisch von PHP aufgelöst, weshalb der Array Key nicht zugeordnet werden konnte und somit als Fallback immer `mysql` verwendet wurde.
+  * Für den Postgres Treiber ist der Parameter `charset` unbekannt und wird mit Fehler abgelehnt. Dieser Parameter wird jetzt nur noch bei MySQL/MariaDB gesetzt, bei allen anderen DBMS nicht mehr, da er dort, laut Recherche gar nicht nötig ist. [Rückmeldung: Mike-on-Tour (phpBB.de)]
+  * Bei leerem Host oder DB Passwort in `config.php` wurde keine Verbindung zur Datenbank aufgebaut, das galt auch für DB Name, DB Benutzer und Tabellen-Präfix. Jetzt wird nur noch DBMS auf Gültigkeit geprüft, alle anderen Felder dürfen leer sein. Damit ist das Verhalten von FC jetzt identisch zum phpBB Installer. [Rückmeldung: Kirk (phpBB.de), Mike-on-Tour (phpBB.de)]
+* Fix: Als präventive Massnahme wurde der Fix von 1.6.0-b1 bezüglich Linien-Länge auch an 2 weiteren Stellen im Code angewendet, wo es um sichtbare Titel geht.
+* Änderungen/Neuerungen bei PDO:
+  * Es gibt jetzt keinen Fallback mehr bei der Zuordnung vom phpBB DBMS Treiber zum PDO Treiber. Wenn das hinterlegte DBMS in `config.php` nicht einem PDO Treiber zugeordnet werden kann, wird explizit `unknown` zurückgegeben und es erfolgt kein Zugriff auf die Datenbank. Ausserdem wird in diesem Fall eine stille Debug Meldung erzeugt, die nur sichtbar wird, wenn der Debug Modus aktiv ist.
+  * Im Abschnitt "Script/PHP information" wird bei "Services" jetzt zusätzlich der von FC gewählte PDO Treiber angezeigt, unabhängig davon, ob der Zugriff auf die Datenbank erfolgreich war. Diese Info wird nur dann angezeigt, wenn `show_extensions` aktiviert ist.
+* Bei etlichen FC Meldungen ein Präfix hinzugefügt, damit die Meldungen besser der entsprechenden Funktionsgruppe im Code zugeordnet werden können.
+* Code Optimierung.
+* Code Bereinigung, sämtlichen deaktivierten Code entfernt. Darunter veralteter Code und Debug Code.
+
 #### 1.6.0-b1
 * Fix: Kleines optisches Problem behoben; für die Berechnung der Linien-Länge oberhalb und unterhalb der Listen, wurde eine falsche PHP Funktion verwendet, was bei Listen-Einträgen, die Multibyte Zeichen enthielten, zu einer falschen Länge führte. Dieses Problem trat erst bei der nachfolgenden Neuerung auf.
 * Neue Funktion zum Ermitteln der verfügbaren Erweiterungen und - sofern möglich - ihrem Status:
@@ -10,7 +25,7 @@
   * Die Erweiterungen werden zuerst nach Nachrichtentyp sortiert und dann nach Anzeigename (natürliche Ordnung).
   * Die Funktion ist per Standard deaktiviert und kann bei Bedarf in `filecheck_config.php` über `show_extensions` aktiviert werden.
   * Unabhängig von diesem Schalter werden die verfügbaren Erweiterungen immer ermittelt, damit in der Zusammenfassung die Anzahl der Erweiterungen angezeigt werden kann. Auf die Datenbank wird allerdings nur dann zugegriffen, wenn der Schalter auch aktiv ist, da auch nur dann der Status relevant ist.
-  * In der Zusammenfassung gibt es einen neuen Eintrag "Extensions", der die Anzahl aller verfügbaren Erweiterungen anzeigt. Dahinter wird die Anzahl der drei Gruppen "Enabled", "Disabled" und "Not-Installed" angezeigt, sofern Zugriff auf die Datenbank erfolgreich war.
+  * In der Zusammenfassung gibt es einen neuen Eintrag "Extensions", der die Anzahl aller verfügbaren Erweiterungen anzeigt. Dahinter wird die Anzahl der drei Gruppen "Enabled", "Disabled" und "Not-Installed" angezeigt, sofern der Zugriff auf die Datenbank erfolgreich war.
 * Wird der Debug Modus aktiviert, werden am Ende des Berichts alle im Nachrichtenspeicher vorhandenen Meldungen in einem neuen Abschnitt namens "Debug messages" angezeigt, die normalerweise nicht sichtbar sind.
 * In den 3 Listen werden zusätzliche Informationen in runden Klammern nicht mehr mit `, ` getrennt, sondern mit ` | ` um eine bessere optische Trennung zu erreichen.
 * Anpassung und Freigabe für PHP 8.6.
