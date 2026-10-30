@@ -41,7 +41,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.6.0-b2';
+$ver					= '1.6.0-b3';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -596,6 +596,7 @@ if ($config['show_extensions'] && file_exists(ROOT_PATH . 'config.php') && files
 
 	$dbms			= $get_phpbb_var('dbms');
 	$dbhost			= $get_phpbb_var('dbhost');
+	$dbport			= $get_phpbb_var('dbport');
 	$dbname			= $get_phpbb_var('dbname');
 	$dbuser			= $get_phpbb_var('dbuser');
 	$dbpasswd		= $get_phpbb_var('dbpasswd');
@@ -603,23 +604,46 @@ if ($config['show_extensions'] && file_exists(ROOT_PATH . 'config.php') && files
 
 	if (!empty($dbms))
 	{
-		/* phpbb/install/helper/database.php->$supported_dbms() */
+// $dbms = 'phpbb\\db\\driver\\mysqli';
+// $dbms = 'phpbb\\db\\driver\\mssqlnative';
+// $dbms = 'phpbb\\db\\driver\\postgres';
+// $dbms = 'phpbb\\db\\driver\\sqlite3';
+// $dbms = 'phpbb\\db\\driver\\mssql_odbc';
+// $dbms = 'phpbb\\db\\driver\\oracle';
+
+		/* phpbb/install/helper/database.php: $supported_dbms */
 		$pdo_dbms = [
 			'phpbb\db\driver\mysqli'		=> 'mysql',
-			'phpbb\db\driver\mssql_odbc'	=> 'odbc',
 			'phpbb\db\driver\mssqlnative'	=> 'sqlsrv',
-			'phpbb\db\driver\oracle'		=> 'oci',
 			'phpbb\db\driver\postgres'		=> 'pgsql',
 			'phpbb\db\driver\sqlite3'		=> 'sqlite',
+			'phpbb\db\driver\mssql_odbc'	=> 'not-supported', /* odbc */
+			'phpbb\db\driver\oracle'		=> 'not-supported', /* oci */
 		][str_replace('\\\\', '\\', $dbms)]	?? 'unknown';
 
-		message(FC_WARNING, "PDO: Unknown DBMS: {$dbms}", $pdo_dbms == 'unknown');
+		message(FC_WARNING, "PDO: Not supported DBMS: {$dbms}"	, $pdo_dbms == 'not-supported');
+		message(FC_WARNING, "PDO: Unknown DBMS: {$dbms}"		, $pdo_dbms == 'unknown');
 
 		$service['PDO'] = $pdo_dbms;
 
-		if ($pdo_dbms != 'unknown')
+		if (!in_array($pdo_dbms, ['unknown', 'not-supported']))
 		{
-			$pdo_dsn = "{$pdo_dbms}:host={$dbhost};dbname={$dbname}" . (($pdo_dbms == 'mysql') ? ';charset=utf8mb4' : '');
+			$pdo_dsn = [
+				'mysql'		=> "{$pdo_dbms}:" .
+					($dbhost ? "host={$dbhost};" : '') .
+					($dbport ? "port={$dbport};" : '') .
+					($dbname ? "dbname={$dbname};" : '') .
+					'charset=utf8mb4;',
+				'sqlsrv'	=> "{$pdo_dbms}:" .
+					($dbhost ? "Server={$dbhost}" : '') . ($dbhost && !$dbport ? ';' : '') . ($dbhost && $dbport ? ",{$dbport};" : '') .
+					($dbname ? "Database={$dbname};" : ''),
+				'pgsql'		=> "{$pdo_dbms}:" .
+					($dbhost ? "host={$dbhost};" : '') .
+					($dbport ? "port={$dbport};" : '') .
+					($dbname ? "dbname={$dbname};" : ''),
+				'sqlite'	=> "{$pdo_dbms}:" .
+					($dbname ? "{$dbname}" : ''),
+			][$pdo_dbms];
 			$pdo_options = [
 				PDO::ATTR_ERRMODE				=> PDO::ERRMODE_EXCEPTION,
 				PDO::ATTR_DEFAULT_FETCH_MODE	=> PDO::FETCH_ASSOC,

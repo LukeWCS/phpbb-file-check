@@ -1,3 +1,12 @@
+#### 1.6.0-b3
+* Fixes bei PDO:
+  * Der DBMS Port wurde bisher nicht berücksichtigt.
+  * Der bisherige DSN String Aufbau war nicht für alle DBMS geeignet. Der DSN String wird jetzt dynamisch generiert und berücksichtigt die individuellen DBMS Eigenschaften.
+  * Der Fix in 1.6.0-b1 bezüglich leerer Felder war unvollständig: Wenn Felder in `config.php` leer sind, dürfen auch deren entsprechende Namen im DSN String nicht mehr vorkommen.
+* Änderungen/Neuerungen bei PDO:
+  * Die Unterstützung für die DBMS Oracle und ODBC wurde entfernt.
+  * Es gibt jetzt eine neue Debug Meldung für bekannte, aber nicht mehr unterstützte DBMS. Somit wird unterschieden zwischen "PDO:unknown" und "PDO:not-supported".
+
 #### 1.6.0-b2
 * Fixes bei PDO:
   * Zuordnung vom phpBB DBMS Treiber zum PDO Treiber:
