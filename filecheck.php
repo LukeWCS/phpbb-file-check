@@ -41,7 +41,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.6.0-b3';
+$ver					= '1.6.0';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -604,13 +604,6 @@ if ($config['show_extensions'] && file_exists(ROOT_PATH . 'config.php') && files
 
 	if (!empty($dbms))
 	{
-// $dbms = 'phpbb\\db\\driver\\mysqli';
-// $dbms = 'phpbb\\db\\driver\\mssqlnative';
-// $dbms = 'phpbb\\db\\driver\\postgres';
-// $dbms = 'phpbb\\db\\driver\\sqlite3';
-// $dbms = 'phpbb\\db\\driver\\mssql_odbc';
-// $dbms = 'phpbb\\db\\driver\\oracle';
-
 		/* phpbb/install/helper/database.php: $supported_dbms */
 		$pdo_dbms = [
 			'phpbb\db\driver\mysqli'		=> 'mysql',
@@ -698,7 +691,7 @@ foreach ($iterator as $file)
 			][$status_extensions[$ext_info['name']] ?? ($status_extensions ? -1 : -2)];
 
 			if ($ext_info['name'] !== false && $ext_info['display_name'] !== false && $ext_info['version'] !== false
-				&& dirname($composer_pathname, 1) == $ext_folder . $composer_ary['name'])
+				&& dirname($composer_pathname, 1) == $ext_folder . $ext_info['name'])
 			{
 				$ext_details = implode($detail_sep, preg_grep('/.+/', [
 					($detail = $ext_info['phpbb'])		? 'phpBB: '		. $detail : '',
@@ -815,12 +808,12 @@ function result_struct(string $file, array $hash_data, string $msg_type, string 
 	];
 };
 
-function format_results(array $result_list, string $result_title = '', string $sort_method = 'files'): string
+function format_results(array $result_list, string $result_title = '', string $list_type = 'files'): string
 {
 	if (count($result_list) > 0)
 	{
 		$output = '';
-		if ($sort_method == 'extensions')
+		if ($list_type == 'extensions')
 		{
 			array_multisort(
 				array_column($result_list, 'msg_type'), SORT_DESC,
@@ -850,7 +843,7 @@ function format_results(array $result_list, string $result_title = '', string $s
 	}
 	else
 	{
-		$output = 'no issues found' . EOL ;
+		$output = ($list_type == 'extensions' ? 'no extensions found' : 'no issues found') . EOL;
 	}
 
 	add_list_lines($output, mb_strlen($result_title));

@@ -1,5 +1,21 @@
 ### 1.6.0
-(2026-11-)
+(2026-11-03)
+
+* Neue Funktion zum Ermitteln der verfügbaren Erweiterungen und - sofern möglich - ihrem Status:
+  * Angezeigt werden alle verfügbaren Erweiterungen mit ihrem Anzeigenamen, Version, phpBB Voraussetzungen, PHP Voraussetzungen und Homepage (sofern vorhanden). Ist der Zugriff auf die Datenbank erfolgreich, wird zusätzlich der Status ermittelt und angezeigt, also Aktiviert, Deaktiviert und Nicht installiert.
+  * Die Erweiterungen werden in einer dritten Liste namens "List of available Extensions" gelistet, mit folgenden 4 neuen Nachrichtentypen:
+    * `2 EXTENSION`: Aktivierte Erweiterung.
+    * `1 EXTENSION`: Deaktivierte Erweiterung.
+    * `0 EXTENSION`: Nicht installierte Erweiterung.
+    * `  EXTENSION`: Status unbekannt. Tritt dann auf, wenn der Zugriff auf die Datenbank nicht möglich/erfolgreich war.
+  * Die Erweiterungen werden zuerst nach Status sortiert und dann nach Anzeigename (natürliche Ordnung). Also so, wie sie auch phpBB im Extension Manager anzeigt.
+  * Die Funktion ist per Standard deaktiviert und kann bei Bedarf in `filecheck_config.php` über `show_extensions` aktiviert werden.
+  * Unabhängig von diesem Schalter werden die verfügbaren Erweiterungen immer ermittelt, damit in der Zusammenfassung die Anzahl der Erweiterungen angezeigt werden kann. Auf die Datenbank wird allerdings nur dann zugegriffen, wenn der Schalter auch aktiv ist, da auch nur dann der Status relevant ist.
+  * In der Zusammenfassung gibt es einen neuen Eintrag "Extensions", der die Anzahl aller verfügbaren Erweiterungen anzeigt. Dahinter wird die Anzahl der drei Gruppen "Enabled", "Disabled" und "Not-Installed" angezeigt, sofern der Zugriff auf die Datenbank erfolgreich war.
+* Wird der Debug Modus aktiviert, werden am Ende des Berichts alle im Nachrichtenspeicher vorhandenen Meldungen in einem neuen Abschnitt namens "Debug messages" angezeigt, die normalerweise nur sichtbar werden, wenn das Skript mit Fehlermeldung vorzeitig beendet wird.
+* Bei etlichen FC Meldungen ein Präfix hinzugefügt, damit die Meldungen besser der entsprechenden Funktionsgruppe im Code zugeordnet werden können.
+* In den 3 Listen werden zusätzliche Informationen in runden Klammern nicht mehr mit `, ` getrennt, sondern mit ` | ` um eine bessere optische Trennung zu erreichen.
+* Anpassung und Freigabe für PHP 8.6.
 
 ### 1.5.7
 (2026-06-07)
