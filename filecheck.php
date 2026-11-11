@@ -6,7 +6,7 @@
 * @copyright (c) 2023 LukeWCS <phpBB.de>
 * @license GNU General Public License, version 2 (GPL-2.0-only)
 *
-* PHP requirements: 7.1.0 - 8.6.x
+* PHP requirements: 7.2.0 - 8.6.x
 *
 */
 
@@ -41,7 +41,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.6.0';
+$ver					= '1.6.1-b1';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -55,6 +55,7 @@ $checksum_version_mode	= 'Manually';
 $checksum_file_flags	= [];
 $config					= [];
 $messages				= '';
+$output					= '';
 $detail_sep				= ' | ';
 $core_ignore_list		= [
 	'^\.git',
@@ -78,11 +79,11 @@ $unexpected_temp_list	= [
 	'store/io_lock.lock',
 ];
 $start_time				= microtime(true);
-$output					= html_start();
 
 /*
 	Check services
 */
+
 $service = [
 	'ZipArchive'		=> extension_loaded('zip'),
 	'cURL'				=> extension_loaded('curl'),
@@ -93,12 +94,14 @@ $service = [
 /*
 	Generate title
 */
+
 $output .= $title . EOL;
 $output .= str_repeat('=', mb_strlen($title)) . EOL;
 
 /*
 	Include config
 */
+
 if (file_exists(ROOT_PATH . $config_file))
 {
 	include ROOT_PATH . $config_file;
@@ -117,6 +120,7 @@ $output .= ($config['debug_mode'] ? '(DEBUG MODE)' . EOL . EOL : EOL);
 /*
 	Get the phpBB version from constants.php
 */
+
 if (file_exists(ROOT_PATH . $constants_file))
 {
 	$constants_content = @file_get_contents(ROOT_PATH . $constants_file);
@@ -152,12 +156,14 @@ else
 {
 	message(FC_WARNING, "phpBB file [{$constants_file}] not found.");
 }
+
 $checksum_source = (isset($phpbb_version) && !file_exists(ROOT_PATH . $checksum_file)) ? 'ZIP' : 'Folder';
 message(FC_NOTICE, "MD5 source: {$checksum_source}");
 
 /*
 	Automatic download and opening of the appropriate checksum package
 */
+
 if ($checksum_source == 'ZIP')
 {
 	message(FC_WARNING	, 'Config: zip_url_pattern not set.',				$config['zip_url_pattern'] == '');
@@ -198,11 +204,11 @@ if ($checksum_source == 'ZIP')
 			preg_match('/(http[s]?):\/\/(.+?)(\/.+)\//', $zip_url, $matches);
 			if (count($matches) == 4)
 			{
-				$socket_status = [];
-				$socket_port = ($matches[1] == 'https') ? 443 : 80;
-				$socket_host = $matches[2];
-				$socket_dir = $matches[3];
-				$zip_content = socket_get_contents($socket_host, $socket_dir, $zip_name, $socket_port, $socket_status) ?? false;
+				$socket_status	= [];
+				$socket_port	= ($matches[1] == 'https') ? 443 : 80;
+				$socket_host	= $matches[2];
+				$socket_dir		= $matches[3];
+				$zip_content	= socket_get_contents($socket_host, $socket_dir, $zip_name, $socket_port, $socket_status) ?? false;
 				message(FC_NOTICE, 'Sockets: ' . ($socket_status[0] ?? ''));
 			}
 			else
@@ -264,6 +270,7 @@ if ($checksum_source == 'ZIP')
 /*
 	Load the checksum files into the hash list
 */
+
 $checksum_name		= '';
 $checksum_ver		= '';
 $checksum_diff_name	= '';
@@ -271,10 +278,10 @@ $checksum_diff_ver	= '';
 $hash_list			= [];
 
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_file)
-	|| $checksum_source == 'ZIP' && zip_file_exists($checksum_file)
+	|| $checksum_source == 'ZIP' && zip_file_exists($zip, $checksum_file)
 )
 {
-	load_checksum_file($checksum_file, $checksum_source, $checksum_name, $checksum_ver, $hash_list);
+	load_checksum_file($checksum_file, $checksum_name, $checksum_ver, $hash_list, $zip ?? null);
 
 	if (isset($phpbb_version) && $checksum_ver != $phpbb_version)
 	{
@@ -284,17 +291,25 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_file)
 }
 else
 {
-	terminate("Checksum file [{$checksum_file}] not found." . ($checksum_source == 'ZIP' && $zip_url != '' && $zip_name != ''
-		? html_zip_instructions($zip_url . $zip_name, $service['ZipArchive'])
-		: ''
-	));
+	if ($checksum_source == 'ZIP' && $zip_url != '' && $zip_name != '')
+	{
+		$zip_instructions = "\n\n" .
+			"Please follow these steps:\n" . add_list_lines(
+			"1. Download the following archive:\n" .
+			"   {$zip_url}{$zip_name}\n" .
+			"2. " . ($service['ZipArchive']
+				? "Upload the archive as it is to the root directory of phpBB, i.e. where [config.php] is.\n"
+				: "Unpack the archive and upload all unpacked files to the root directory of phpBB, i.e. where [config.php] is.\n") .
+			"3. Run phpBB File Check again.\n");
+	}
+	terminate("Checksum file [{$checksum_file}] not found." . $zip_instructions ?? '');
 }
 
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $checksum_diff_file)
-	|| $checksum_source == 'ZIP' && zip_file_exists($checksum_diff_file)
+	|| $checksum_source == 'ZIP' && zip_file_exists($zip, $checksum_diff_file)
 )
 {
-	load_checksum_file($checksum_diff_file, $checksum_source, $checksum_diff_name, $checksum_diff_ver, $hash_list);
+	load_checksum_file($checksum_diff_file, $checksum_diff_name, $checksum_diff_ver, $hash_list, $zip ?? null);
 
 	if (isset($phpbb_version) && $checksum_diff_ver != $phpbb_version)
 	{
@@ -310,7 +325,7 @@ $checksums_count_len	= strlen((string) $count_checksums);
 	Load and check the external ignore list
 */
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
-	|| $checksum_source == 'ZIP' && zip_file_exists($ignore_file)
+	|| $checksum_source == 'ZIP' && zip_file_exists($zip, $ignore_file)
 )
 {
 	if ($checksum_source == 'Folder')
@@ -319,7 +334,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
 	}
 	else
 	{
-		$import_list = zip_extract_to_array($ignore_file) ?? false;
+		$import_list = zip_extract_to_array($zip, $ignore_file) ?? false;
 	}
 
 	$line_num		= 0;
@@ -336,8 +351,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $ignore_file)
 		}
 		if ($error_messages != '')
 		{
-			add_list_lines($error_messages);
-			terminate("Ignore list [{$ignore_file}] has the following issues:" . EOL . $error_messages);
+			terminate("Ignore list [{$ignore_file}] has the following issues:" . EOL . add_list_lines($error_messages));
 		}
 		$core_ignore_list = array_merge($core_ignore_list, $import_list);
 	}
@@ -354,8 +368,9 @@ $unexpected_ignore_regex	= implode('|', $unexpected_ignore_list);
 /*
 	Load and check the external exception list
 */
+
 if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $exceptions_file)
-	|| $checksum_source == 'ZIP' && zip_file_exists($exceptions_file)
+	|| $checksum_source == 'ZIP' && zip_file_exists($zip, $exceptions_file)
 )
 {
 	if ($checksum_source == 'Folder')
@@ -364,7 +379,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $exceptions_file)
 	}
 	else
 	{
-		$import_list = zip_extract_to_array($exceptions_file) ?? false;
+		$import_list = zip_extract_to_array($zip, $exceptions_file) ?? false;
 	}
 
 	$line_num		= 0;
@@ -381,8 +396,7 @@ if ($checksum_source == 'Folder' && file_exists(ROOT_PATH . $exceptions_file)
 		}
 		if ($error_messages != '')
 		{
-			add_list_lines($error_messages);
-			terminate("Exception list [{$exceptions_file}] has the following issues:" . EOL . $error_messages);
+			terminate("Exception list [{$exceptions_file}] has the following issues:" . EOL . add_list_lines($error_messages));
 		}
 		$core_exception_list = array_merge($core_exception_list, $import_list);
 		sort($core_exception_list);
@@ -402,6 +416,7 @@ if (isset($zip))
 /*
 	Display: versions and number of checksums
 */
+
 $output .= sprintf('Version mode : %1$s', $checksum_version_mode) . EOL;
 $output .= sprintf('MD5 source   : %1$s (%2$s)', $checksum_source, implode(', ', $checksum_file_flags)) . EOL;
 $output .= sprintf('phpBB Version: %1$s', $phpbb_version ?? 'Unknown') . EOL;
@@ -418,20 +433,20 @@ if (IS_BROWSER)
 	{
 		$_SESSION['exec_check'] = 1;
 		header('refresh: 0; url=filecheck.php');
-		$output .= html_end(false);
-		flush_buffer();
+		send_output($output, 'wait');
 		exit;
 	}
 	$_SESSION = [];
 }
 else
 {
-	flush_buffer();
+	send_output($output);
 }
 
 /*
 	Core-check
 */
+
 $count_missing		= 0;
 $count_different	= 0;
 $count_error		= 0;
@@ -510,6 +525,7 @@ $runtime_core = microtime(true) - $start_time_core;
 /*
 	Unexpected-check
 */
+
 $count_unexpected		= 0;
 $package_folders		= [];
 $local_files			= [];
@@ -574,6 +590,7 @@ $runtime_unexpected = microtime(true) - $start_time_unexpected;
 /*
 	Identify available extensions
 */
+
 $result_extensions_list = [];
 $status_extensions		= [];
 $count_extensions		= [
@@ -721,6 +738,7 @@ $runtime_extensions = microtime(true) - $start_time_extensions;
 /*
 	Format results and add to display buffer
 */
+
 $output .= EOL . format_results($result_core_list, 'List of core files with anomalies', 'files');
 $output .= EOL . format_results($result_unexpected_list, 'List of unexpected files', 'files');
 if ($config['show_extensions'])
@@ -731,6 +749,7 @@ if ($config['show_extensions'])
 /*
 	Display: results and summary
 */
+
 $summary = '';
 if ($config['debug_mode'])
 {
@@ -771,12 +790,10 @@ $output .= EOL;
 $output .= 'Finished!' . EOL;
 $output .= EOL;
 $output .= 'Report summary' . EOL;
-$output .= str_repeat('-', column_max_len($summary)) . EOL;
-$output .= $summary;
+$output .= add_list_lines($summary, 0, 'upper');
 $output .= EOL;
 $output .= 'Script/PHP information' . EOL;
-$output .= str_repeat('-', column_max_len($exec_info)) . EOL;
-$output .= $exec_info;
+$output .= add_list_lines($exec_info, 0, 'upper');
 
 if ($config['debug_mode'])
 {
@@ -787,8 +804,7 @@ if ($config['debug_mode'])
 	$output .= $messages;
 }
 
-$output .= html_end();
-flush_buffer();
+send_output($output, 'button');
 
 /*
 	Script end
@@ -808,7 +824,7 @@ function result_struct(string $file, array $hash_data, string $msg_type, string 
 	];
 };
 
-function format_results(array $result_list, string $result_title = '', string $list_type = 'files'): string
+function format_results(array $result_list, string $result_title, string $list_type): string
 {
 	if (count($result_list) > 0)
 	{
@@ -821,7 +837,7 @@ function format_results(array $result_list, string $result_title = '', string $l
 				$result_list
 			);
 		}
-		else
+		else if ($list_type == 'files')
 		{
 			uasort($result_list, function($a, $b) {
 				return [$a['path'], $a['file']] <=> [$b['path'], $b['file']];
@@ -846,9 +862,7 @@ function format_results(array $result_list, string $result_title = '', string $l
 		$output = ($list_type == 'extensions' ? 'no extensions found' : 'no issues found') . EOL;
 	}
 
-	add_list_lines($output, mb_strlen($result_title));
-
-	return $result_title . (($result_title != '') ? EOL : '') . $output;
+	return $result_title . ($result_title ? EOL : '') . add_list_lines($output, mb_strlen($result_title));
 }
 
 function is_ignored(string $file, string $ignore_regex): bool
@@ -874,14 +888,6 @@ function is_exception(string $file, array $exception_list): bool
 	return false;
 }
 
-function flush_buffer(): void
-{
-	global $output;
-
-	echo $output;
-	$output = '';
-}
-
 function message(int $type, string $message, bool $condition = true): void
 {
 	if ($condition)
@@ -899,169 +905,19 @@ function terminate(string $message): void
 
 	message(FC_ERROR, $message);
 	$output .= $messages;
-	$output .= html_end();
-	flush_buffer();
+	send_output($output);
 	exit;
 }
 
-function html_start(): string
+function load_checksum_file(string $checksum_file, string &$checksum_name, string &$checksum_ver, array &$hash_list, ?object $zip): void
 {
-	if (!IS_BROWSER)
-	{
-		return '';
-	}
-
-	$output = <<<'_HTML_'
-<!DOCTYPE HTML>
-<html>
-<head>
-	<title>phpBB File Check</title>
-	<meta name="robots" content="noindex">
-	<style>
-		body {
-			font-size: 1.1em;
-		}
-		.prevent-select {
-			-webkit-user-select: none;
-			user-select: none;
-		}
-		#result-message {
-			font-family: verdana;
-			font-size: 0.8em;
-		}
-		.msg-success:before {
-			color: limegreen;
-			content: "\2714\0020";
-		}
-		.msg-error:before {
-			color: red;
-			content: "\2716\0020";
-		}
-		.bbcode {
-			opacity: 0.3;
-		}
-	</style>
-</head>
-<body>
-<pre>
-<span class="bbcode">[code]</span>
-
-_HTML_;
-
-	return $output;
-}
-
-function html_end(bool $show_button = true): string
-{
-	if (!IS_BROWSER)
-	{
-		return '';
-	}
-
-	$output = <<<'_HTML_'
-<span class="bbcode">[/code]</span>
-</pre>
-
-_HTML_;
-
-	if ($show_button)
-	{
-		$output .= <<<'_HTML_'
-<div class="prevent-select">
-	<hr>
-	<button>Copy report to clipboard</button> <span id="result-message" hidden>message</span>
-</div>
-<script>
-	function copyReport()
-	{
-		const button = this;
-		const message = document.querySelector('#result-message');
-
-		button.disabled = true;
-		if (navigator.clipboard) {
-			try {
-				navigator.clipboard.writeText(document.querySelector('pre').innerText);
-				message.className = 'msg-success';
-				message.innerHTML = 'copy successful';
-			} catch (err) {
-				console.error(err);
-				message.className = 'msg-error';
-				message.innerHTML = 'copy failed!';
-			}
-		} else {
-			const selection = window.getSelection();
-			const range = document.createRange();
-
-			range.selectNode(document.querySelector('pre'));
-			selection.removeAllRanges();
-			selection.addRange(range);
-			try {
-				document.execCommand('copy');
-				message.className = 'msg-success';
-				message.innerHTML = 'copy successful';
-			} catch (err) {
-				console.error(err);
-				message.className = 'msg-error';
-				message.innerHTML = 'copy failed!';
-			}
-			selection.removeAllRanges();
-		}
-		message.hidden = false;
-		setTimeout(function() {
-			message.hidden = (message.className == 'msg-success');
-			button.disabled = false;
-		}, 3000);
-	}
-	document.addEventListener('DOMContentLoaded', function() {
-		document.querySelector('button').addEventListener('click', copyReport);
-	});
-</script>
-
-_HTML_;
-	}
-
-	$output .= <<<'_HTML_'
-</body>
-</html>
-
-_HTML_;
-
-	return $output;
-}
-
-function html_zip_instructions(string $zip_file_url, bool $zip_service): string
-{
-	if (IS_BROWSER)
-	{
-		$zip_file_url = "<a href=\"{$zip_file_url}\">{$zip_file_url}</a>";
-	}
-
-	$step_2 = ($zip_service
-		? '2. Upload the archive as it is to the root directory of phpBB, i.e. where [config.php] is.'
-		: '2. Unpack the archive and upload all unpacked files to the root directory of phpBB, i.e. where [config.php] is.'
-	);
-
-	$output = EOL . EOL . <<<"_HTML_"
-Please follow these steps:
---------------------------
-1. Download the following archive:
-{$zip_file_url}
-{$step_2}
-3. Run phpBB File Check again.
-_HTML_;
-
-	return $output;
-}
-
-function load_checksum_file(string $checksum_file, string $checksum_source, string &$checksum_name, string &$checksum_ver, array &$hash_list): void
-{
-	if ($checksum_source == 'Folder')
+	if ($zip === null)
 	{
 		$checksums = @file(ROOT_PATH . $checksum_file, FILE_IGNORE_NEW_LINES);
 	}
 	else
 	{
-		$checksums = zip_extract_to_array($checksum_file) ?? false;
+		$checksums = zip_extract_to_array($zip, $checksum_file) ?? false;
 	}
 
 	if ($checksums === false)
@@ -1114,17 +970,18 @@ function load_checksum_file(string $checksum_file, string $checksum_source, stri
 	}
 	if ($error_messages != '')
 	{
-		add_list_lines($error_messages);
-		terminate("Checksum file [{$checksum_file}] has the following issues:" . EOL . $error_messages);
+		terminate("Checksum file [{$checksum_file}] has the following issues:" . EOL . add_list_lines($error_messages));
 	}
 }
 
-function add_list_lines(string &$list, int $min_len = 0): void
+function add_list_lines(string $list, int $min_len = 0, string $lines_pos = 'both'): string
 {
 	$column_len = column_max_len($list);
 	$column_len = ($column_len < $min_len) ? $min_len : $column_len;
 	$list_separator = str_repeat('-', $column_len);
-	$list = $list_separator . EOL . $list . $list_separator . EOL ;
+	return	(in_array($lines_pos, ['upper', 'both']) ? $list_separator . EOL : '') .
+			$list .
+			(in_array($lines_pos, ['lower', 'both']) ? $list_separator . EOL : '');
 }
 
 function column_max_len($list, string $column_name = ''): int
@@ -1134,18 +991,14 @@ function column_max_len($list, string $column_name = ''): int
 	return max(array_map('mb_strlen', $column));
 }
 
-function zip_file_exists(string $file_name): bool
+function zip_file_exists(?object $zip, string $file_name): bool
 {
-	global $zip;
-
-	return isset($zip) && $zip->locateName($file_name) !== false;
+	return $zip !== null && $zip->locateName($file_name) !== false;
 }
 
-function zip_extract_to_array(string $file_name): ?array
+function zip_extract_to_array(?object $zip, string $file_name): ?array
 {
-	global $zip;
-
-	if (!isset($zip))
+	if ($zip === null)
 	{
 		return null;
 	}
@@ -1204,4 +1057,111 @@ function socket_get_contents(string $host, string $directory, string $file, int 
 	return (stripos($status[0] ?? '', '200 OK') !== false && $content != '') ? $content : null;
 }
 
-# phpcs:set VariableAnalysis.CodeAnalysis.VariableAnalysis validUnusedVariableNames
+function send_output(string &$text, string $mode = ''): void
+{
+	global $title;
+
+	if (!IS_BROWSER)
+	{
+		echo $text;
+		$text = '';
+		return;
+	}
+
+# phpcs:disable phpbb.ControlStructures.OpeningBraceBsdAllman.BraceOnSameLine
+# phpcs:disable Squiz.ControlStructures.ElseIfDeclaration.NotAllowed
+
+?>
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>phpBB File Check</title>
+		<meta name="robots" content="noindex">
+		<style>
+			body {
+				font-family: "Trebuchet MS", sans-serif;
+				margin: 1em;
+				background-color: #f5f5f5;
+			}
+			.title {
+				font-size: 1.1em;
+			}
+			textarea {
+				padding: 0.25em 0.5em;
+				font-size: 1.1em;
+				width: 100%;
+				height: calc(100vh - 10em);
+				box-sizing: border-box;
+				resize: none;
+			}
+			#message {
+				font-family: verdana;
+				font-size: 0.8em;
+			}
+			.msg-success:before {
+				color: limegreen;
+				content: "\2714\0020";
+			}
+			.msg-error:before {
+				color: red;
+				content: "\2716\0020";
+			}
+			.msg-wait:before {
+				content: "\23F3\0020";
+			}
+		</style>
+	</head>
+	<body>
+		<p>
+			<span class="title"><?php echo $title ?><span>
+		</p>
+
+		<textarea name="report" rows="30" cols="135" wrap="off" readonly><?php echo "[code]\n" . $text . "[/code]" ?></textarea>
+
+<?php if ($mode == 'wait'): ?>
+		<p>
+			<span id="message" class="msg-wait">please wait...</span>
+		</p>
+<?php elseif ($mode == 'button'): ?>
+		<p>
+			<button name="copy">Copy report to clipboard</button> <span id="message" hidden>message</span>
+		</p>
+
+		<script>
+			function copyReport() {
+				const button		= this;
+				const message		= document.querySelector('#message');
+				const textContainer	= document.querySelector('textarea')
+
+				button.disabled = true;
+				textContainer.select();
+				try {
+					if (typeof navigator !== 'undefined' && navigator.clipboard) {
+						navigator.clipboard.writeText(textContainer.value);
+					} else {
+						document.execCommand('copy');
+					}
+					message.className = 'msg-success';
+					message.innerHTML = 'copy successful';
+				} catch (err) {
+					console.error('clipboard copy error: ' + err);
+					message.className = 'msg-error';
+					message.innerHTML = 'copy failed!';
+				}
+
+				message.hidden = false;
+				setTimeout(function() {
+					message.hidden = (message.className == 'msg-success');
+					button.disabled = false;
+				}, 3000);
+			}
+
+			document.addEventListener('DOMContentLoaded', function() {
+				document.querySelector('button[name="copy"]').addEventListener('click', copyReport);
+			});
+		</script>
+<?php endif; ?>
+	</body>
+</html>
+<?php
+}

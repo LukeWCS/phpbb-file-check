@@ -1,3 +1,13 @@
+#### 1.6.1-b1
+
+* Voraussetzungen haben sich geändert: PHP Mindestversion 7.1 -> 7.2.
+* Das HTML Gerüst von "phpBB File Check Version Search" übernommen, wodurch sich folgende Änderungen ergeben:
+  * Der Bericht wird nicht länger in einem `<pre>` Container eingefügt, sondern in einer Textbox (`<textarea>`).
+  * Während der Bericht erzeugt wird, ist unter der Textbox eine Sanduhr und ein kleiner Warte-Hinweis sichtbar.
+  * Die Textbox hat den Vorteil, dass der Button zum Kopieren in die Zwischenablage immer sofort sichtbar wird, wenn der Bericht erzeugt wurde, ohne die Seite ans Ende blättern zu müssen.
+  * Die Textbox hat ausserdem Vorteile bei JavaScript, da eine robustere Methode zum Selektieren verwendet werden kann und diese auch weniger Code benötigt.
+* Code Optimierung.
+
 ### 1.6.0
 * Release (2026-11-03)
 * Wenn keine verfügbaren (gültigen) Erweiterungen gefunden werden konnten, wird jetzt `no extensions found` in die Liste eingefügt, anstatt `no issues found`.
