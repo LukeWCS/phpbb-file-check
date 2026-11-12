@@ -41,7 +41,7 @@ const VERSION_VARS		= [
 	'{PATCH}',
 ];
 
-$ver					= '1.6.1-b1';
+$ver					= '1.6.1';
 $title					= "phpBB File Check v{$ver}";
 $checksum_file_name		= 'filecheck';
 $checksum_file_suffix	= '.md5';
@@ -1083,8 +1083,9 @@ function send_output(string &$text, string $mode = ''): void
 				margin: 1em;
 				background-color: #f5f5f5;
 			}
-			.title {
+			h1 {
 				font-size: 1.1em;
+				font-weight: normal;
 			}
 			textarea {
 				padding: 0.25em 0.5em;
@@ -1098,6 +1099,9 @@ function send_output(string &$text, string $mode = ''): void
 				font-family: verdana;
 				font-size: 0.8em;
 			}
+			.msg-wait:before {
+				content: "\23F3\0020";
+			}
 			.msg-success:before {
 				color: limegreen;
 				content: "\2714\0020";
@@ -1106,17 +1110,12 @@ function send_output(string &$text, string $mode = ''): void
 				color: red;
 				content: "\2716\0020";
 			}
-			.msg-wait:before {
-				content: "\23F3\0020";
-			}
 		</style>
 	</head>
 	<body>
-		<p>
-			<span class="title"><?php echo $title ?><span>
-		</p>
+		<h1><?php echo $title; ?></h1>
 
-		<textarea name="report" rows="30" cols="135" wrap="off" readonly><?php echo "[code]\n" . $text . "[/code]" ?></textarea>
+		<textarea name="report" rows="30" cols="135" wrap="off" readonly><?php echo "[code]\n" . $text . "[/code]"; ?></textarea>
 
 <?php if ($mode == 'wait'): ?>
 		<p>

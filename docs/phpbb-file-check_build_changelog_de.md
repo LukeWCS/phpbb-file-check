@@ -1,6 +1,9 @@
+### 1.6.1
+* Release (2026-11-12)
+
 #### 1.6.1-b1
 
-* Voraussetzungen haben sich geändert: PHP Mindestversion 7.1 -> 7.2.
+* PHP Mindestversion 7.1 -> 7.2.
 * Das HTML Gerüst von "phpBB File Check Version Search" übernommen, wodurch sich folgende Änderungen ergeben:
   * Der Bericht wird nicht länger in einem `<pre>` Container eingefügt, sondern in einer Textbox (`<textarea>`).
   * Während der Bericht erzeugt wird, ist unter der Textbox eine Sanduhr und ein kleiner Warte-Hinweis sichtbar.
